@@ -1,0 +1,7 @@
+{
+    "program": {
+        "x86-64": {"url": "glow_64.pexe"},
+        "x86-32": {"url": "glow_32.pexe"},
+        "arm": {"url": "glow_arm.pexe"}
+    }
+}
