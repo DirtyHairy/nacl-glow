@@ -5,7 +5,7 @@ TOOLCHAIN_arm = $(NACL_SDK_ROOT)/toolchain/linux_arm_newlib
 
 INCLUDE = -I$(NACL_SDK_ROOT)/include
 LIBS = -lppapi_cpp -lppapi
-SOURCE = glow.cc
+SOURCE = glow.cc logger.cc renderer.cc
 CXXFLAGS = -O2
 
 LIB_FLAVOR = $(if $(RELEASE),Release,Debug)
@@ -35,7 +35,7 @@ OBJECTS_32 = $(patsubst %.cc,obj_32/%.o,$(SOURCE))
 OBJECTS_arm = $(patsubst %.cc,obj_arm/%.o,$(SOURCE))
 OBJECTS = $(OBJECTS_64) $(OBJECTS_32) $(OBJECTS_arm)
 
-GARBAGE = $(OBJECTS) obj_64 obj_32 obj_arm
+GARBAGE = $(OBJECTS) obj_64 obj_32 obj_arm Makefile.depend
 SEMIGARBAGE = $(BIN)
 
 all: $(BIN)
@@ -69,3 +69,10 @@ clean:
 
 realclean: clean
 	-rm -fr $(SEMIGARBAGE)
+
+Makefile.depend: Makefile
+	$(CXX_64) $(CXXFLAGS) $(INCLUDE) -MM $(SOURCE) | sed -e 's/^\(.*\.o:\)/obj_64\/\1/' > $@
+	$(CXX_32) $(CXXFLAGS) $(INCLUDE) -MM $(SOURCE) | sed -e 's/^\(.*\.o:\)/obj_32\/\1/' >> $@
+	$(CXX_arm) $(CXXFLAGS) $(INCLUDE) -MM $(SOURCE) | sed -e 's/^\(.*\.o:\)/obj_arm\/\1/' >> $@
+
+include Makefile.depend
