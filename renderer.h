@@ -6,6 +6,7 @@
 #include "ppapi/cpp/instance_handle.h"
 
 #include "logger.h"
+#include "grayscale_buffer.h"
 
 namespace glow {
 
@@ -30,6 +31,10 @@ class Renderer {
         pp::Graphics2D* graphics;
         pp::SimpleThread* thread;
         Logger* logger;
+        GrayscaleBuffer* grayscale_buffer;
+
+        void RenderBuffer();
+        void DecayBuffer();
 
         Renderer(const Renderer&);
         const Renderer& operator=(const Renderer&);

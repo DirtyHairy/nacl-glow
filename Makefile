@@ -5,7 +5,7 @@ TOOLCHAIN_arm = $(NACL_SDK_ROOT)/toolchain/linux_arm_newlib
 
 INCLUDE = -I$(NACL_SDK_ROOT)/include
 LIBS = -lppapi_cpp -lppapi
-SOURCE = glow.cc logger.cc renderer.cc
+SOURCE = glow.cc logger.cc renderer.cc grayscale_buffer.cc
 CXXFLAGS = -O2
 
 LIB_FLAVOR = $(if $(RELEASE),Release,Debug)

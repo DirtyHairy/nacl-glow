@@ -30,14 +30,9 @@ void delay(timeval& reference, uint32_t delay)
     if (actual_delay > 0) usleep(delay);
 }
 
-uint32_t PixelRGB(const uint8_t r, const uint8_t g, const uint8_t b) {
-    return 0xFF000000 & (b >> 16) & (g >> 8) & r;
+inline uint32_t PixelRGB(const uint8_t r, const uint8_t g, const uint8_t b) {
+    return 0xFF000000 | (b << 16) | (g << 8) | r;
 }
-
-const uint32_t BLACK = 0xFF000000;
-const uint32_t RED = 0xFF0000FF;
-const uint32_t GREEN = 0xFF00FF00;
-const uint32_t BLUE = 0xFFFF0000;
 
 class EQuit : public std::exception {};
 
@@ -53,13 +48,14 @@ Renderer::Renderer(
    handle(handle),
    logger(logger),
    graphics(graphics),
-   thread(NULL)
+   thread(NULL),
+   grayscale_buffer(NULL)
 {}
 
 Renderer::~Renderer() {
     Stop();
 
-    logger->Log("finito");
+    if (grayscale_buffer != NULL) delete grayscale_buffer;
 }
 
 void Renderer::Start() {
@@ -83,19 +79,11 @@ void Renderer::Stop() {
 
 void Renderer::_Dispatch() {
     pp::Size extent = graphics->size();
-    pp::ImageData image_data(handle, PP_IMAGEDATAFORMAT_RGBA_PREMUL, extent, false);
-    uint32_t* buffer = static_cast<uint32_t*>(image_data.data());
+    grayscale_buffer = new GrayscaleBuffer(extent.width(), extent.height());
 
-    for (int i = 0; i < extent.GetArea(); i++) {
-        buffer[i] = RED;
-    }
-
-    graphics->PaintImageData(image_data, pp::Point(0, 0));
-    graphics->ReplaceContents(&image_data);
-
-    graphics->Flush(pp::CompletionCallback());
-
-    logger->Log("Clear OK");
+    for (int x = 0; x < 100; x++)
+        for (int y = 0; y < 100; y++)
+            grayscale_buffer->Set(x, y, 200);
 
     timeval timestamp;
     pp::MessageLoop& message_loop = thread->message_loop();
@@ -104,15 +92,45 @@ void Renderer::_Dispatch() {
         while (true) {
             if (gettimeofday(&timestamp, NULL) != 0) throw EQuit();
 
-            logger->Log("tick");
+            RenderBuffer();
+            DecayBuffer();
 
             if (message_loop.PostQuit(false) != PP_OK) throw EQuit();
             if (message_loop.Run() != PP_OK) throw EQuit();
 
-            delay(timestamp, 500000);
+            delay(timestamp, 1000000 / 30);
         }
     }
     catch(EQuit) {}
+}
+
+void Renderer::RenderBuffer() {
+    pp::Size extent = graphics->size();
+    pp::ImageData image_data(handle, PP_IMAGEDATAFORMAT_RGBA_PREMUL, extent, false);
+
+    uint8_t* gray_buffer = grayscale_buffer->GetBuffer();
+    uint32_t* image_buffer = static_cast<uint32_t*>(image_data.data());
+
+    uint32_t area = extent.GetArea();
+
+    for (uint32_t i = 0; i < area; i++) {
+        image_buffer[i] =
+            PixelRGB(gray_buffer[i], gray_buffer[i], gray_buffer[i]);
+    }
+
+    graphics->ReplaceContents(&image_data);
+    graphics->Flush(pp::CompletionCallback());
+}
+
+void Renderer::DecayBuffer() {
+    uint8_t* gray_buffer = grayscale_buffer->GetBuffer();
+    uint32_t area = grayscale_buffer->GetArea();
+    int32_t hue;
+
+    for (uint32_t i = 0; i< area; i++) {
+        hue = (gray_buffer[i] * 95) / 100 - 1;
+        gray_buffer[i] = hue > 0 ? hue : 0;
+    }
 }
 
 }
