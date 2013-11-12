@@ -1,6 +1,7 @@
 #include "renderer.h"
 
 #include <exception>
+#include <sstream>
 
 #include "sys/time.h"
 #include "unistd.h"
@@ -18,16 +19,17 @@ void dispatch(pp::MessageLoop&, void* user_data) {
     static_cast<glow::Renderer*>(user_data)->_Dispatch();
 }
 
-void delay(timeval& reference, uint32_t delay)
+uint32_t delay(timeval& reference, uint32_t delay)
 {
     timeval current;
-    if (gettimeofday(&current, NULL) != 0) return;
+    if (gettimeofday(&current, NULL) != 0) return 0;
 
     int32_t actual_delay = delay
         - (current.tv_sec - reference.tv_sec) * 1000000
         - current.tv_usec + reference.tv_usec;
 
-    if (actual_delay > 0) usleep(delay);
+    if (actual_delay > 0 && actual_delay <= delay) usleep(delay);
+    return delay;
 }
 
 inline uint32_t PixelRGB(const uint8_t r, const uint8_t g, const uint8_t b) {
@@ -50,12 +52,15 @@ Renderer::Renderer(
    graphics(graphics),
    thread(NULL),
    grayscale_buffer(NULL)
-{}
+{
+    callback_factory = new pp::CompletionCallbackFactory<Renderer>(this);
+}
 
 Renderer::~Renderer() {
     Stop();
 
     if (grayscale_buffer != NULL) delete grayscale_buffer;
+    delete callback_factory;
 }
 
 void Renderer::Start() {
@@ -87,16 +92,30 @@ void Renderer::_Dispatch() {
 
     timeval timestamp;
     pp::MessageLoop& message_loop = thread->message_loop();
+    std::stringstream ss;
+    uint32_t lost_frames;
 
     try {
         while (true) {
             if (gettimeofday(&timestamp, NULL) != 0) throw EQuit();
 
-            RenderBuffer();
             DecayBuffer();
 
             if (message_loop.PostQuit(false) != PP_OK) throw EQuit();
             if (message_loop.Run() != PP_OK) throw EQuit();
+
+            if (!render_pending) {
+                if (lost_frames > 0) {
+                    ss.str("");
+                    ss << "Render: skipped " << lost_frames << " frames";
+                    logger->Log(ss.str());
+                    lost_frames = 0;
+                }
+                render_pending = true;
+                RenderBuffer();
+            } else {
+                lost_frames++;
+            }
 
             delay(timestamp, 1000000 / 30);
         }
@@ -119,7 +138,11 @@ void Renderer::RenderBuffer() {
     }
 
     graphics->ReplaceContents(&image_data);
-    graphics->Flush(pp::CompletionCallback());
+    graphics->Flush(callback_factory->NewCallback(&Renderer::RenderCallback));
+}
+
+void Renderer::RenderCallback(uint32_t status) {
+    render_pending = false;
 }
 
 void Renderer::DecayBuffer() {

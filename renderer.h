@@ -2,6 +2,7 @@
 #define GLOW_RENDERER_H
 
 #include "ppapi/utility/threading/simple_thread.h"
+#include "ppapi/utility/completion_callback_factory.h"
 #include "ppapi/cpp/graphics_2d.h"
 #include "ppapi/cpp/instance_handle.h"
 
@@ -30,11 +31,15 @@ class Renderer {
         pp::InstanceHandle handle;
         pp::Graphics2D* graphics;
         pp::SimpleThread* thread;
+        pp::CompletionCallbackFactory<Renderer>* callback_factory;
+
         Logger* logger;
         GrayscaleBuffer* grayscale_buffer;
+        bool render_pending;
 
         void RenderBuffer();
         void DecayBuffer();
+        void RenderCallback(uint32_t status);
 
         Renderer(const Renderer&);
         const Renderer& operator=(const Renderer&);
