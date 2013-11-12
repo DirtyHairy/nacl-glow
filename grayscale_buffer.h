@@ -15,7 +15,7 @@ class GrayscaleBuffer {
             return buffer[x * width + y];
         }
 
-        uint32_t Set(uint32_t x, uint32_t y, uint32_t hue) {
+        void Set(uint32_t x, uint32_t y, uint32_t hue) {
             buffer[x * width + y] = hue;
         }
 

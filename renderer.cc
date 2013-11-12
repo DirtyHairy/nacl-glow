@@ -28,7 +28,9 @@ uint32_t delay(timeval& reference, uint32_t delay)
         - (current.tv_sec - reference.tv_sec) * 1000000
         - current.tv_usec + reference.tv_usec;
 
-    if (actual_delay > 0 && actual_delay <= delay) usleep(delay);
+    if (actual_delay > 0 && static_cast<uint32_t>(actual_delay) <= delay) {
+        usleep(delay);
+    }
     return delay;
 }
 
@@ -93,7 +95,7 @@ void Renderer::_Dispatch() {
     timeval timestamp;
     pp::MessageLoop& message_loop = thread->message_loop();
     std::stringstream ss;
-    uint32_t lost_frames;
+    uint32_t lost_frames = 0;
 
     try {
         while (true) {

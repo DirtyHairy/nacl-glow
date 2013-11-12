@@ -29,11 +29,10 @@ class Renderer {
     private:
    
         pp::InstanceHandle handle;
+        Logger* logger;
         pp::Graphics2D* graphics;
         pp::SimpleThread* thread;
         pp::CompletionCallbackFactory<Renderer>* callback_factory;
-
-        Logger* logger;
         GrayscaleBuffer* grayscale_buffer;
         bool render_pending;
 
