@@ -7,7 +7,7 @@
 #include "ppapi/cpp/instance_handle.h"
 
 #include "logger.h"
-#include "grayscale_buffer.h"
+#include "surface.h"
 
 namespace glow {
 
@@ -33,11 +33,10 @@ class Renderer {
         pp::Graphics2D* graphics;
         pp::SimpleThread* thread;
         pp::CompletionCallbackFactory<Renderer>* callback_factory;
-        GrayscaleBuffer* grayscale_buffer;
+        Surface* surface;
         bool render_pending;
 
-        void RenderBuffer();
-        void DecayBuffer();
+        void RenderSurface();
         void RenderCallback(uint32_t status);
 
         Renderer(const Renderer&);

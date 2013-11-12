@@ -53,7 +53,7 @@ Renderer::Renderer(
    logger(logger),
    graphics(graphics),
    thread(NULL),
-   grayscale_buffer(NULL)
+   surface(NULL)
 {
     callback_factory = new pp::CompletionCallbackFactory<Renderer>(this);
 }
@@ -61,7 +61,6 @@ Renderer::Renderer(
 Renderer::~Renderer() {
     Stop();
 
-    if (grayscale_buffer != NULL) delete grayscale_buffer;
     delete callback_factory;
 }
 
@@ -82,15 +81,17 @@ void Renderer::Stop() {
     thread->Join();
     delete thread;
     thread = NULL;
+
+    delete surface;
 }
 
 void Renderer::_Dispatch() {
     pp::Size extent = graphics->size();
-    grayscale_buffer = new GrayscaleBuffer(extent.width(), extent.height());
+    surface = new Surface(extent.width(), extent.height());
 
     for (int x = 0; x < 100; x++)
         for (int y = 0; y < 100; y++)
-            grayscale_buffer->Set(x, y, 200);
+            surface->Set(x, y, 200);
 
     timeval timestamp;
     pp::MessageLoop& message_loop = thread->message_loop();
@@ -101,7 +102,7 @@ void Renderer::_Dispatch() {
         while (true) {
             if (gettimeofday(&timestamp, NULL) != 0) throw EQuit();
 
-            DecayBuffer();
+            surface->Decay();
 
             if (message_loop.PostQuit(false) != PP_OK) throw EQuit();
             if (message_loop.Run() != PP_OK) throw EQuit();
@@ -114,7 +115,7 @@ void Renderer::_Dispatch() {
                     lost_frames = 0;
                 }
                 render_pending = true;
-                RenderBuffer();
+                RenderSurface();
             } else {
                 lost_frames++;
             }
@@ -125,18 +126,18 @@ void Renderer::_Dispatch() {
     catch(EQuit) {}
 }
 
-void Renderer::RenderBuffer() {
+void Renderer::RenderSurface() {
     pp::Size extent = graphics->size();
     pp::ImageData image_data(handle, PP_IMAGEDATAFORMAT_RGBA_PREMUL, extent, false);
 
-    uint8_t* gray_buffer = grayscale_buffer->GetBuffer();
+    uint8_t* surface_buffer = surface->GetBuffer();
     uint32_t* image_buffer = static_cast<uint32_t*>(image_data.data());
 
     uint32_t area = extent.GetArea();
 
     for (uint32_t i = 0; i < area; i++) {
         image_buffer[i] =
-            PixelRGB(gray_buffer[i], gray_buffer[i], gray_buffer[i]);
+            PixelRGB(surface_buffer[i], surface_buffer[i], surface_buffer[i]);
     }
 
     graphics->ReplaceContents(&image_data);
@@ -145,17 +146,6 @@ void Renderer::RenderBuffer() {
 
 void Renderer::RenderCallback(uint32_t status) {
     render_pending = false;
-}
-
-void Renderer::DecayBuffer() {
-    uint8_t* gray_buffer = grayscale_buffer->GetBuffer();
-    uint32_t area = grayscale_buffer->GetArea();
-    int32_t hue;
-
-    for (uint32_t i = 0; i< area; i++) {
-        hue = (gray_buffer[i] * 95) / 100 - 1;
-        gray_buffer[i] = hue > 0 ? hue : 0;
-    }
 }
 
 }

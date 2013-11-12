@@ -5,11 +5,11 @@
 
 namespace glow {
 
-class GrayscaleBuffer {
+class Surface {
     public:
 
-        GrayscaleBuffer(uint32_t width, uint32_t height);
-        ~GrayscaleBuffer();
+        Surface(uint32_t width, uint32_t height);
+        ~Surface();
 
         uint32_t Get(uint32_t x, uint32_t y) const {
             return buffer[x * width + y];
@@ -27,13 +27,15 @@ class GrayscaleBuffer {
             return buffer;
         }
 
+        void Decay();
+
     private:
 
         uint32_t width, height, area;
         uint8_t* buffer;
 
-        GrayscaleBuffer(const GrayscaleBuffer&);
-        const GrayscaleBuffer& operator=(const GrayscaleBuffer&);
+        Surface(const Surface&);
+        const Surface& operator=(const Surface&);
 };
 
 }
