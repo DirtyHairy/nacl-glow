@@ -12,11 +12,11 @@ class Surface {
         ~Surface();
 
         uint32_t Get(uint32_t x, uint32_t y) const {
-            return buffer[x * width + y];
+            return buffer[y * width + x];
         }
 
         void Set(uint32_t x, uint32_t y, uint32_t hue) {
-            buffer[x * width + y] = hue;
+            buffer[y * width + x] = hue;
         }
 
         uint32_t GetArea() const {
@@ -28,6 +28,7 @@ class Surface {
         }
 
         void Decay();
+        void Line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2);
 
     private:
 

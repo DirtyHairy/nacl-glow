@@ -53,15 +53,15 @@ $(BIN_arm) : $(OBJECTS_arm)
 	[ -n "$(RELEASE)" ] && $(STRIP_arm) $@ || true
 
 $(OBJECTS_64) : obj_64/%.o : %.cc
-	test -d obj_64 || mkdir obj_64
+	-test -d obj_64 || mkdir obj_64
 	$(CXX_64) $(CXXFLAGS) $(INCLUDE) -o $@ -c $<
 
 $(OBJECTS_32) : obj_32/%.o : %.cc
-	test -d obj_32 || mkdir obj_32
+	-test -d obj_32 || mkdir obj_32
 	$(CXX_32) $(CXXFLAGS) $(INCLUDE) -o $@ -c $<
 
 $(OBJECTS_arm) : obj_arm/%.o : %.cc
-	test -d obj_arm || mkdir obj_arm
+	-test -d obj_arm || mkdir obj_arm
 	$(CXX_arm) $(CXXFLAGS) $(INCLUDE) -o $@ -c $<
 
 clean:

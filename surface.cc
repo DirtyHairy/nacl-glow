@@ -26,4 +26,22 @@ void Surface::Decay() {
     }
 }
 
+void Surface::Line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2) {
+    int32_t dx = x2 - x1,
+            dy = y2 - y1;
+    int32_t stepx = dx > 0 ? 1 : -1,
+            stepy = dy > 0 ? 1 : -1;
+    int32_t x = x1 - stepx, y = y1, ny;
+
+    while (static_cast<uint32_t>(x) != x2) {
+        x += stepx;
+        y -= stepy;
+        ny = (dx != 0 ? y1 + (dy * (x - static_cast<int32_t>(x1))) / dx : y2);
+        while (y != ny) {
+            y += stepy;
+            Set(x, y, 255);
+       };
+    };
+}
+
 }

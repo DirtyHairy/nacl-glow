@@ -93,6 +93,8 @@ void Renderer::_Dispatch() {
         for (int y = 0; y < 100; y++)
             surface->Set(x, y, 200);
 
+    surface->Line(200, 100, 250, 200);
+
     timeval timestamp;
     pp::MessageLoop& message_loop = thread->message_loop();
     std::stringstream ss;
