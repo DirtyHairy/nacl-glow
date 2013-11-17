@@ -17,5 +17,5 @@ files. The build generates x86-32, x86-64 and arm binaries.
 
 You'll have to place the html, the `.nmf` manifest file and the
 `.pexe` executables on a webserver in order to try out the program. You can find
-a built version [here]('http://www.cspeckner.de/nacl/glow'). The program builds
+a built version [here](http://www.cspeckner.de/nacl/glow). The program builds
 fine with pepper version 30.
