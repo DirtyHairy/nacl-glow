@@ -27,6 +27,8 @@ void Surface::Decay() {
 }
 
 void Surface::Line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2) {
+    if (x1 >= width || x2 >= width || y1 >= height || y2 >= height) return;
+
     int32_t dx = x2 - x1,
             dy = y2 - y1;
     int32_t stepx = dx > 0 ? 1 : -1,

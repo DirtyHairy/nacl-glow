@@ -85,15 +85,33 @@ void Renderer::Stop() {
     delete surface;
 }
 
+void Renderer::MoveTo(const pp::Point& x) {
+    thread->message_loop().PostWork(callback_factory->NewCallback(
+        &Renderer::DoMoveTo, x)
+    );
+}
+
+void Renderer::DrawTo(const pp::Point& x) {
+    thread->message_loop().PostWork(callback_factory->NewCallback(
+        &Renderer::DoDrawTo, x)
+    );
+}
+
+void Renderer::DoMoveTo(uint32_t status, const pp::Point& x) {
+    current_position = x;
+}
+
+void Renderer::DoDrawTo(uint32_t status, const pp::Point& x) {
+    if (surface != NULL) surface->Line(
+        current_position.x(), current_position.y(),
+        x.x(), x.y()
+    );
+    current_position = x;
+}
+
 void Renderer::_Dispatch() {
     pp::Size extent = graphics->size();
     surface = new Surface(extent.width(), extent.height());
-
-    for (int x = 0; x < 100; x++)
-        for (int y = 0; y < 100; y++)
-            surface->Set(x, y, 200);
-
-    surface->Line(200, 100, 250, 200);
 
     timeval timestamp;
     pp::MessageLoop& message_loop = thread->message_loop();
