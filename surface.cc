@@ -50,6 +50,20 @@ void Surface::Decay() {
     }
 }
 
+void Surface::Circle(int32_t x, int32_t y, uint32_t r) {
+    uint32_t r2 = r * r;
+    uint32_t dx, dx2, dy;
+    for (dx = 0; dx <= r; dx++) {
+        dx2 = dx * dx;
+        for (dy = 0; dx2 + dy*dy <= r2; dy++) {
+            SetClipped(x + dx, y + dy, 255);
+            SetClipped(x + dx, y - dy, 255);
+            SetClipped(x - dx, y + dy, 255);
+            SetClipped(x - dx, y - dy, 255);
+        }
+    }
+}
+
 void Surface::Line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2) {
     if (x1 >= width || x2 >= width || y1 >= height || y2 >= height) return;
 
@@ -65,7 +79,7 @@ void Surface::Line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2) {
         ny = (dx != 0 ? y1 + (dy * (x - static_cast<int32_t>(x1))) / dx : y2);
         while (y != ny) {
             y += stepy;
-            Set(x, y, 255);
+            Circle(x, y, 2);
        };
     };
 }

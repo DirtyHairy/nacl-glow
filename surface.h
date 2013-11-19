@@ -43,6 +43,14 @@ class Surface {
             buffer[y * width + x] = hue;
         }
 
+        void SetClipped(int32_t x, int32_t y, uint32_t hue) {
+            if (x >= 0 && static_cast<uint32_t>(x) < width &&
+                y >= 0 && static_cast<uint32_t>(y) < height)
+            {
+                buffer[y * width + x] = hue;
+            }
+        }
+
         uint32_t GetArea() const {
             return area;
         }
@@ -53,6 +61,7 @@ class Surface {
 
         void Decay();
         void Line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2);
+        void Circle(int32_t x, int32_t y, uint32_t r);
 
     private:
 
