@@ -77,7 +77,8 @@ Renderer::Renderer(
    logger(logger),
    graphics(graphics),
    thread(NULL),
-   surface(NULL)
+   surface(NULL),
+   drawing(false)
 {
     callback_factory = new pp::CompletionCallbackFactory<Renderer>(this);
 }
@@ -121,6 +122,12 @@ void Renderer::DrawTo(const pp::Point& x) {
     );
 }
 
+void Renderer::SetDrawing(bool isDrawing) {
+    thread->message_loop().PostWork(callback_factory->NewCallback(
+        &Renderer::DoSetDrawing, isDrawing)
+    );
+}
+
 void Renderer::DoMoveTo(uint32_t status, const pp::Point& x) {
     current_position = x;
 }
@@ -131,6 +138,10 @@ void Renderer::DoDrawTo(uint32_t status, const pp::Point& x) {
         x.x(), x.y()
     );
     current_position = x;
+}
+
+void Renderer::DoSetDrawing(uint32_t status, bool isDrawing) {
+    drawing = isDrawing;
 }
 
 void Renderer::_Dispatch() {
@@ -150,6 +161,10 @@ void Renderer::_Dispatch() {
 
             if (message_loop.PostQuit(false) != PP_OK) throw EQuit();
             if (message_loop.Run() != PP_OK) throw EQuit();
+
+            if (drawing){
+                surface->Circle(current_position.x(), current_position.y(), 2);
+            }
 
             if (!render_pending) {
                 if (lost_frames > 0) {

@@ -22,8 +22,8 @@
  * THE SOFTWARE.
  */
 
-#ifndef GLOW_GRAYSCALE_BUFFER_H
-#define GLOW_GRAYSCALE_BUFFER_H
+#ifndef GLOW_SURFACE_H
+#define GLOW_SURFACE_H
 
 #include <stdint.h>
 
@@ -74,4 +74,4 @@ class Surface {
 
 }
 
-#endif // GLOW_GRAYSCALE_BUFFER_H
+#endif // GLOW_SURFACE_H

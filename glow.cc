@@ -73,12 +73,14 @@ class Instance : public pp::Instance {
             switch (event.GetType()) {
                 case PP_INPUTEVENT_TYPE_MOUSEDOWN:
                     drawing = true;
+                    renderer->SetDrawing(true);
                     renderer->MoveTo(pp::MouseInputEvent(event).GetPosition());
                     return true;
 
                 case PP_INPUTEVENT_TYPE_MOUSELEAVE:
                 case PP_INPUTEVENT_TYPE_MOUSEUP:
                     drawing = false;
+                    renderer->SetDrawing(false);
                     return true;
 
                 case PP_INPUTEVENT_TYPE_MOUSEMOVE:

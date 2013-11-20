@@ -51,6 +51,7 @@ class Renderer {
 
         void MoveTo(const pp::Point& x);
         void DrawTo(const pp::Point& x);
+        void SetDrawing(bool drawing);
 
         void _Dispatch();
 
@@ -65,12 +66,14 @@ class Renderer {
         bool render_pending;
 
         pp::Point current_position;
+        bool drawing;
 
         void RenderSurface();
         void RenderCallback(uint32_t status);
 
         void DoMoveTo(uint32_t status, const pp::Point& x);
         void DoDrawTo(uint32_t status, const pp::Point& x);
+        void DoSetDrawing(uint32_t status, bool drawing);
 
         Renderer(const Renderer&);
         const Renderer& operator=(const Renderer&);
