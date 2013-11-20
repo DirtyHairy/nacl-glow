@@ -39,6 +39,17 @@ class Surface {
             return buffer[y * width + x];
         }
 
+        uint32_t GetClipped(int32_t x, int32_t y) const {
+            if (x >= 0 && static_cast<uint32_t>(x) < width &&
+               y >= 0 && static_cast<uint32_t>(y) < height)
+            {
+                return buffer[y * width + x];
+            } else {
+                return 0;
+            }
+  
+        }
+
         void Set(uint32_t x, uint32_t y, uint32_t hue) {
             buffer[y * width + x] = hue;
         }
@@ -59,14 +70,14 @@ class Surface {
             return buffer;
         }
 
-        void Decay();
-        void Line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2);
+        void Decay(float bleed, float decay_exp, uint8_t decay_lin);
+        void Line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t r);
         void Circle(int32_t x, int32_t y, uint32_t r);
 
     private:
 
         uint32_t width, height, area;
-        uint8_t* buffer;
+        uint8_t* buffer, *backbuffer;
 
         Surface(const Surface&);
         const Surface& operator=(const Surface&);

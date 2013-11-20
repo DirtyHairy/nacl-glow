@@ -67,6 +67,7 @@ class Renderer {
 
         pp::Point current_position;
         bool drawing;
+        uint32_t radius;
 
         void RenderSurface();
         void RenderCallback(uint32_t status);

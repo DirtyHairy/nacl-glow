@@ -25,6 +25,7 @@
 #include "surface.h"
 
 #include <cstring>
+#include <cmath>
 
 namespace glow {
 
@@ -34,20 +35,53 @@ Surface::Surface(uint32_t width, uint32_t height) :
     area(width * height)
 {
     buffer = new uint8_t[area];
+    backbuffer = new uint8_t[area];
     memset(buffer, 0, area);
 }
 
 Surface::~Surface() {
     delete[] buffer;
+    delete[] backbuffer;
 }
 
-void Surface::Decay() {
-    int32_t hue;
+void Surface::Decay(float bleed, float decay_exp, uint8_t decay_lin) {
+    const uint32_t base = 1 << 20;
 
-    for (uint32_t i = 0; i < area; i++) {
-        hue = (buffer[i] * 95) / 100 - 1;
-        buffer[i] = hue > 0 ? hue : 0;
+    uint32_t    bleed_neightbours = nearbyint(bleed / 8. * static_cast<float>(base)),
+                bleed_center = nearbyint((1. - bleed) * static_cast<float>(base)),
+                decay_factor = nearbyint((1. - decay_exp) * static_cast<float>(base));
+
+    for (uint32_t x = 0; x < width; x++) {
+        for (uint32_t y = 0; y < height; y++) {
+            int32_t hue = 0;
+            
+            if (bleed_neightbours > 0) {
+                    hue += bleed_neightbours * (
+                        GetClipped(x-1, y-1) + GetClipped(x, y-1) + GetClipped(x+1, y-1) +
+                        GetClipped(x-1, y) + GetClipped(x+1, y) +
+                        GetClipped(x-1, y+1) + GetClipped(x, y+1) + GetClipped(x+1, y+1)
+                    );
+                hue += bleed_center * Get(x, y);
+                hue /= base;
+            }
+            hue *= decay_factor;
+            hue /= base;
+            hue -= decay_lin;
+
+            uint32_t offset = y * width + x;
+            if (hue < 0) {
+                backbuffer[offset] = 0;
+            } else if (hue > 255) {
+                backbuffer[offset] = 255;
+            } else {
+                backbuffer[offset] = hue;
+            }
+        }
     }
+
+    uint8_t* tmp = buffer;
+    buffer = backbuffer;
+    backbuffer = tmp;
 }
 
 void Surface::Circle(int32_t x, int32_t y, uint32_t r) {
@@ -64,7 +98,7 @@ void Surface::Circle(int32_t x, int32_t y, uint32_t r) {
     }
 }
 
-void Surface::Line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2) {
+void Surface::Line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t r) {
     if (x1 >= width || x2 >= width || y1 >= height || y2 >= height) return;
 
     int32_t dx = x2 - x1,
@@ -79,7 +113,7 @@ void Surface::Line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2) {
         ny = (dx != 0 ? y1 + (dy * (x - static_cast<int32_t>(x1))) / dx : y2);
         while (y != ny) {
             y += stepy;
-            Circle(x, y, 2);
+            Circle(x, y, r);
        };
     };
 }
