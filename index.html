@@ -1,16 +1,52 @@
 <html>
-<head></head>
-<body>
+<head>
 
-<embed
-    name="glow_module"
-    id="glow_module" 
-    width="640"
-    height="480"
-    src="glow.nmf"
-    type="application/x-nacl"
-    style="padding: 10px;"
-/>
+<link rel="stylesheet" type="text/css" href="default.css"/>
+
+<script>
+(function() {
+    var loader, module;
+
+    function onModuleLoad() {
+        loader.style.display = 'none';
+    }
+
+    function onDocumentLoad() {
+        loader = document.getElementById('loader');
+        module = document.getElementById('glow_module');
+
+        window.onModuleLoad = onModuleLoad;
+        if (window.moduleLoaded) onModuleLoad();
+    }
+
+    window.onDocumentLoad = onDocumentLoad;
+})();
+</script>
+
+</head>
+<body onload="onDocumentLoad()">
+
+<div id="container">
+        <script>
+        (function() {
+            function listener() {
+                window.moduleLoaded = true;
+                if (window.onModuleLoad) window.onModuleLoad();
+            }
+
+            document.getElementById('container').addEventListener('load', listener, true);
+        })();
+        </script>
+        <div id="loader">NaCl module loading...</div>
+        <embed
+            name="glow_module"
+            id="glow_module" 
+            width="640"
+            height="480"
+            src="glow.nmf"
+            type="application/x-nacl"
+        />
+</div>
 
 </body>
 </html>
