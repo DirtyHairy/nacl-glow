@@ -1,0 +1,18 @@
+#container {
+    width: 640px;
+    height: 480px;
+    padding: 10px;
+    position: relative;
+}
+
+#loader {
+    position: absolute;
+    top: 230px;
+    left: 10px;
+    z-index: 1;
+    width: 640px;
+    text-align: center;
+}
+
+#glow_module {
+}
