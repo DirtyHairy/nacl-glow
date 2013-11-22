@@ -32,6 +32,7 @@
 
 #include "logger.h"
 #include "renderer.h"
+#include "settings.h"
 
 namespace glow {
 
@@ -60,7 +61,7 @@ class Instance : public pp::Instance {
                 graphics = new pp::Graphics2D(this, extent, true);
                 BindGraphics(*graphics);
 
-                renderer = new Renderer(this, logger, graphics);
+                renderer = new Renderer(this, logger, settings, graphics);
                 renderer->Start();
             }
 
@@ -102,6 +103,7 @@ class Instance : public pp::Instance {
         Logger* logger;
         Renderer* renderer;
         bool drawing;
+        Settings settings;
 };
 
 class Module : public pp::Module {

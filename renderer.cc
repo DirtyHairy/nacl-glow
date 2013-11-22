@@ -71,6 +71,7 @@ namespace glow {
 Renderer::Renderer(
     const pp::InstanceHandle& handle,
     Logger* logger,
+    const Settings& settings,
     pp::Graphics2D* graphics)
 :
    handle(handle),
@@ -79,7 +80,7 @@ Renderer::Renderer(
    thread(NULL),
    surface(NULL),
    drawing(false),
-   radius(3)
+   settings(settings)
 {
     callback_factory = new pp::CompletionCallbackFactory<Renderer>(this);
 }
@@ -136,7 +137,7 @@ void Renderer::DoMoveTo(uint32_t status, const pp::Point& x) {
 void Renderer::DoDrawTo(uint32_t status, const pp::Point& x) {
     if (surface != NULL) surface->Line(
         current_position.x(), current_position.y(),
-        x.x(), x.y(), radius
+        x.x(), x.y(), settings.Radius()
     );
     current_position = x;
 }
@@ -158,13 +159,21 @@ void Renderer::_Dispatch() {
         while (true) {
             if (gettimeofday(&timestamp, NULL) != 0) throw EQuit();
 
-            surface->Decay(0.95, 0.1, 0);
+            surface->Decay(
+                settings.Bleed(),
+                settings.Decay_exp(),
+                settings.Decay_lin()
+            );
 
             if (message_loop.PostQuit(false) != PP_OK) throw EQuit();
             if (message_loop.Run() != PP_OK) throw EQuit();
 
             if (drawing){
-                surface->Circle(current_position.x(), current_position.y(), radius);
+                surface->Circle(
+                    current_position.x(),
+                    current_position.y(),
+                    settings.Radius()
+                );
             }
 
             if (!render_pending) {
@@ -180,7 +189,7 @@ void Renderer::_Dispatch() {
                 lost_frames++;
             }
 
-            delay(timestamp, 1000000 / 20);
+            delay(timestamp, 1000000 / settings.Fps());
         }
     }
     catch(EQuit) {}

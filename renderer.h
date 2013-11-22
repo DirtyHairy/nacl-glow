@@ -33,6 +33,7 @@
 
 #include "logger.h"
 #include "surface.h"
+#include "settings.h"
 
 namespace glow {
 
@@ -42,6 +43,7 @@ class Renderer {
         Renderer(
             const pp::InstanceHandle& handle,
             Logger* logger,
+            const Settings& settings,
             pp::Graphics2D* graphics
         );
         ~Renderer();
@@ -64,10 +66,10 @@ class Renderer {
         pp::CompletionCallbackFactory<Renderer>* callback_factory;
         Surface* surface;
         bool render_pending;
+        bool drawing;
+        const Settings& settings;
 
         pp::Point current_position;
-        bool drawing;
-        uint32_t radius;
 
         void RenderSurface();
         void RenderCallback(uint32_t status);
