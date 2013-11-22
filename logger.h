@@ -35,14 +35,14 @@ namespace glow {
 class Logger {
     public:
 
-        Logger(pp::Instance* instance);
+        Logger(pp::Instance& instance);
         ~Logger();
 
         void Log(const std::string& message);
 
     private:
 
-        pp::Instance* instance;
+        pp::Instance& instance;
         pp::Lock lock;
 
         Logger(const Logger&);

@@ -29,6 +29,7 @@
 #include "ppapi/cpp/module.h"
 #include "ppapi/cpp/var.h"
 #include "ppapi/cpp/input_event.h"
+#include "ppapi/cpp/var_dictionary.h"
 
 #include "logger.h"
 #include "renderer.h"
@@ -45,7 +46,7 @@ class Instance : public pp::Instance {
             renderer(NULL),
             drawing(false)
         {
-            logger = new Logger(this);
+            logger = new Logger(*this);
             RequestInputEvents(PP_INPUTEVENT_CLASS_MOUSE);
         }
 
@@ -97,13 +98,79 @@ class Instance : public pp::Instance {
             return false;
         }
 
+        virtual void HandleMessage(const pp::Var& message) {
+            try {
+                if (!message.is_dictionary()) throw EInvalidMessage();
+                pp::VarDictionary msg(message);
+
+                std::string subject = MessageGetString(msg, "subject");
+                if (subject == "requestSettings") {
+                    PostMessage(BuildSettingsMessage());
+                } else {
+                    throw EInvalidMessage();
+                }
+
+            } catch (EInvalidMessage& e) {
+                PostMessage(BuildErrorMessage("invalid message", &message));
+            }
+        }
+
     private:
+
+        class EInvalidMessage {};
 
         pp::Graphics2D* graphics;
         Logger* logger;
         Renderer* renderer;
         bool drawing;
         Settings settings;
+
+        std::string MessageGetString(
+            const pp::VarDictionary& msg,
+            const std::string& name
+        ) const {
+            if (!msg.HasKey(name)) throw EInvalidMessage();
+
+            pp::Var value = msg.Get(name);
+            if (!value.is_string()) throw EInvalidMessage();
+
+            return value.AsString();
+        }
+
+        pp::VarDictionary BuildErrorMessage(
+            const std::string& description,
+            const pp::Var* originalMessage = NULL
+        ) const
+        {
+            pp::VarDictionary message;
+    
+            message.Set(pp::Var("subject"), pp::Var("error"));
+            message.Set(pp::Var("message"), pp::Var(description));
+            if (originalMessage != NULL) {
+                message.Set(pp::Var("originalMessage"), *originalMessage);
+            }
+
+            return message;
+        }
+    
+        pp::VarDictionary BuildSettingsMessage() const {
+            pp::VarDictionary message;
+    
+            message.Set(pp::Var("subject"),
+                pp::Var("settingsBroadcast"));
+            message.Set(pp::Var("bleed"),
+                pp::Var(static_cast<double>(settings.Bleed())));
+            message.Set(pp::Var("decayExp"),
+                pp::Var(static_cast<int32_t>(settings.Decay_lin())));
+            message.Set(pp::Var("decayLin"),
+                pp::Var(static_cast<double>(settings.Decay_exp())));
+            message.Set(pp::Var("radius"),
+                pp::Var(static_cast<int32_t>(settings.Radius())));
+            message.Set(pp::Var("fps"),
+                pp::Var(static_cast<int32_t>(settings.Fps())));
+    
+            return message;
+        }
 };
 
 class Module : public pp::Module {

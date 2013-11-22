@@ -7,8 +7,16 @@
 (function() {
     var loader, module;
 
+    function onMessage(message) {
+        console.log(message.data);
+    }
+
     function onModuleLoad() {
         loader.style.display = 'none';
+        module.addEventListener('message', onMessage, true);
+        module.postMessage({
+            subject: 'requestSettings'
+        });
     }
 
     function onDocumentLoad() {
