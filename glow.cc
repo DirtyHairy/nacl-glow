@@ -144,10 +144,10 @@ class Instance : public pp::Instance {
         {
             pp::VarDictionary message;
     
-            message.Set(pp::Var("subject"), pp::Var("error"));
-            message.Set(pp::Var("message"), pp::Var(description));
+            message.Set("subject", "error");
+            message.Set("message", description);
             if (originalMessage != NULL) {
-                message.Set(pp::Var("originalMessage"), *originalMessage);
+                message.Set("originalMessage", *originalMessage);
             }
 
             return message;
@@ -156,18 +156,12 @@ class Instance : public pp::Instance {
         pp::VarDictionary BuildSettingsMessage() const {
             pp::VarDictionary message;
     
-            message.Set(pp::Var("subject"),
-                pp::Var("settingsBroadcast"));
-            message.Set(pp::Var("bleed"),
-                pp::Var(static_cast<double>(settings.Bleed())));
-            message.Set(pp::Var("decayExp"),
-                pp::Var(static_cast<int32_t>(settings.Decay_lin())));
-            message.Set(pp::Var("decayLin"),
-                pp::Var(static_cast<double>(settings.Decay_exp())));
-            message.Set(pp::Var("radius"),
-                pp::Var(static_cast<int32_t>(settings.Radius())));
-            message.Set(pp::Var("fps"),
-                pp::Var(static_cast<int32_t>(settings.Fps())));
+            message.Set("subject", "settingsBroadcast");
+            message.Set("bleed",    static_cast<double>(settings.Bleed()));
+            message.Set("decayExp", static_cast<int32_t>(settings.Decay_lin()));
+            message.Set("decayLin", static_cast<double>(settings.Decay_exp()));
+            message.Set("radius",   static_cast<int32_t>(settings.Radius()));
+            message.Set("fps",      static_cast<int32_t>(settings.Fps()));
     
             return message;
         }
