@@ -47,7 +47,7 @@ Surface::~Surface() {
 void Surface::Decay(float bleed, float decay_exp, uint8_t decay_lin) {
     const uint32_t base = 1 << 20;
 
-    uint32_t    bleed_neightbours = nearbyint(bleed / 8. * static_cast<float>(base)),
+    int32_t     bleed_neightbours = nearbyint(bleed / 8. * static_cast<float>(base)),
                 bleed_center = nearbyint((1. - bleed) * static_cast<float>(base)),
                 decay_factor = nearbyint((1. - decay_exp) * static_cast<float>(base));
 
@@ -63,6 +63,8 @@ void Surface::Decay(float bleed, float decay_exp, uint8_t decay_lin) {
                     );
                 hue += bleed_center * Get(x, y);
                 hue /= base;
+            } else {
+                hue = Get(x, y);
             }
             hue *= decay_factor;
             hue /= base;

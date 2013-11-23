@@ -3,6 +3,8 @@
     height: 480px;
     padding: 10px;
     position: relative;
+    display: inline-block;
+    float: left;
 }
 
 #loader {
@@ -15,4 +17,23 @@
 }
 
 #glow_module {
+}
+
+#controls {
+    display: inline-block;
+    padding: 10px;
+    visibility: hidden;
+}
+
+label {
+    display: inline-block;
+    width: 180px;
+}
+
+input {
+    width: 200px;
+}
+
+div.input-group {
+    padding: 5px 0 5px 0;
 }

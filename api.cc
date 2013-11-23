@@ -46,6 +46,30 @@ std::string MessageGetString(
     return value.AsString();
 }
 
+float MessageGetFloat(
+    const pp::VarDictionary& msg,
+    const std::string& name)
+{
+    if (!msg.HasKey(name)) throw EInvalidMessage();
+
+    pp::Var value = msg.Get(name);
+    if (value.is_number()) return value.AsDouble();
+
+    throw EInvalidMessage();
+}
+
+int32_t MessageGetInt(
+    const pp::VarDictionary& msg,
+    const std::string& name)
+{
+    if (!msg.HasKey(name)) throw EInvalidMessage();
+
+    pp::Var value = msg.Get(name);
+    if (!value.is_int()) throw EInvalidMessage();
+
+    return value.AsInt();
+}
+
 pp::VarDictionary BuildErrorMessage(
     const std::string& description,
     const pp::Var* originalMessage = NULL)
@@ -66,12 +90,37 @@ pp::VarDictionary BuildSettingsMessage(const glow::Settings& settings) {
 
     message.Set("subject", "settingsBroadcast");
     message.Set("bleed",    static_cast<double>(settings.Bleed()));
-    message.Set("decayExp", static_cast<int32_t>(settings.Decay_lin()));
-    message.Set("decayLin", static_cast<double>(settings.Decay_exp()));
+    message.Set("decayLin", static_cast<int32_t>(settings.Decay_lin()));
+    message.Set("decayExp", static_cast<double>(settings.Decay_exp()));
     message.Set("radius",   static_cast<int32_t>(settings.Radius()));
     message.Set("fps",      static_cast<int32_t>(settings.Fps()));
 
     return message;
+}
+
+void ApplyChangeSettingsMessage(
+    const pp::VarDictionary& message,
+    glow::Settings& settings)
+{
+    glow::Settings newSettings(settings);
+
+    if (message.HasKey("radius")) {
+        newSettings.Radius(MessageGetInt(message, "radius"));
+    }
+    if (message.HasKey("bleed")) {
+        newSettings.Bleed(MessageGetFloat(message, "bleed"));
+    }
+    if (message.HasKey("decayExp")) {
+        newSettings.Decay_exp(MessageGetFloat(message, "decayExp"));
+    }
+    if (message.HasKey("decayLin")) {
+        newSettings.Decay_lin(MessageGetInt(message, "decayLin"));
+    }
+    if (message.HasKey("fps")) {
+        newSettings.Fps(MessageGetInt(message, "fps"));
+    }
+
+    settings = newSettings;
 }
 
 }
@@ -88,6 +137,10 @@ void Api::HandleMessage(const pp::Var& message) {
         std::string subject = MessageGetString(msg, "subject");
         if (subject == "requestSettings") {
             instance.PostMessage(BuildSettingsMessage(instance.GetSettings()));
+
+        } else if (subject == "changeSettings") {
+            ApplyChangeSettingsMessage(msg, instance.GetSettings());
+
         } else {
             throw EInvalidMessage();
         }

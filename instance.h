@@ -50,6 +50,10 @@ class Instance : public pp::Instance {
             return settings;
         }
 
+        Logger& GetLogger() {
+            return *logger;
+        }
+
     private:
 
         pp::Graphics2D* graphics;

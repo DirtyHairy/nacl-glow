@@ -29,11 +29,109 @@ THE SOFTWARE.
 
 <script>
 (function() {
-    var loader, module;
+    var loader, module, controls,
+        inputs = {
+            bleed: 'bleed',
+            radius: 'radius',
+            decayExp: 'decay_exp',
+            decayLin: 'decay_lin',
+            fps: 'target_fps'
+        };
+
+    function marshall(name, value) {
+        switch (name) {
+            case 'bleed':
+                return parseFloat(value);
+            case 'radius':
+                return parseInt(value, 10);
+            case 'decayExp':
+                return parseFloat(value);
+            case 'decayLin':
+                return parseInt(value, 10);
+            case 'fps':
+                return parseInt(value, 10);
+            default:
+                return value;
+        }
+    }
 
     function onMessage(message) {
-        console.log(message.data);
+        var subject = message.data.subject;
+
+        if (subject == 'settingsBroadcast') {
+            onSettingsBroadcast(message.data);
+        } else if (subject == 'error') {
+            console.log('module reports error: ', message.data);    
+        } else {
+            console.log(message.data);
+        }
     }
+    
+    function onSettingsBroadcast(message) {
+        for (var name in inputs) (function(name) {
+            var container = inputs[name],
+                input = getInput(container);
+
+            if (message.hasOwnProperty(name)) {
+                input.value = message[name];
+                onInputChange(name);
+            }
+        })(name);
+
+        controls.style.visibility = 'visible';
+    }
+
+    function onInputChange(name, relay) {
+        var container = inputs[name],
+            input = getInput(container),
+            monitor = getMonitor(container);
+
+        monitor.innerHTML = input.value;
+        if (relay) {
+            relaySettings();
+        }
+    }
+
+    function relaySettings() {
+        var message = {
+            subject: 'changeSettings'
+        }
+
+        for (var name in inputs) {
+            message[name] = marshall(name, getInput(inputs[name]).value);
+        }
+
+        if (module) {
+            module.postMessage(message);
+        }
+    }
+
+    function getInput(container) {
+        return container.getElementsByTagName('input')[0];
+    }
+
+    function getMonitor(container) {
+        return container.getElementsByTagName('span')[0];
+    }
+
+    function onDocumentLoad() {
+        loader = document.getElementById('loader');
+        module = document.getElementById('glow_module');
+        controls = document.getElementById('controls');
+
+        for (var name in inputs) (function(name) {
+            var container = inputs[name] = document.getElementById(inputs[name]),
+                input = getInput(container);
+
+            input.addEventListener('change', function() {
+                onInputChange(name, true);
+            }, true);
+        })(name);
+
+        window.onModuleLoad = onModuleLoad;
+        if (window.moduleLoaded) onModuleLoad();
+    }
+
 
     function onModuleLoad() {
         loader.style.display = 'none';
@@ -41,14 +139,6 @@ THE SOFTWARE.
         module.postMessage({
             subject: 'requestSettings'
         });
-    }
-
-    function onDocumentLoad() {
-        loader = document.getElementById('loader');
-        module = document.getElementById('glow_module');
-
-        window.onModuleLoad = onModuleLoad;
-        if (window.moduleLoaded) onModuleLoad();
     }
 
     window.onDocumentLoad = onDocumentLoad;
@@ -78,6 +168,33 @@ THE SOFTWARE.
             src="glow.nmf"
             type="application/x-nacl"
         />
+</div>
+<div id="controls">
+    <div class="input-group" id="radius">
+        <label for="radius">Radius: <span></span></label>
+        <input type="range" min="0" max="100" step="1" value="0" name="radius"/>
+    </div>
+    <br/>
+    <div class="input-group" id="bleed">
+        <label for="bleed">Bleed: <span></span></label>
+        <input type="range" min="0" max="1" step="0.01" value="0" name="bleed"/>
+    </div>
+    <br/>
+    <div class="input-group" id="decay_exp">
+        <label for="decay_exp">Exponential Decay: <span></span></label>
+        <input type="range" min="0" max="1" step="0.01" value="0" name="decay_exp"/>
+    </div>
+    <br/>
+    <div class="input-group" id="decay_lin">
+        <label for="decay_lin">Linear Decay: <span></span></label>
+        <input type="range" min="0" max="10" step="1" value="0" name="decay_lin"/>
+    </div>
+    <br/>
+    <div class="input-group" id="target_fps">
+        <label for="target_fps">Target FPS: <span></span></label>
+        <input type="range" min="1" max="200" step="1" value="1"
+            name="target_fps"/>
+    </div>
 </div>
 
 </body>
