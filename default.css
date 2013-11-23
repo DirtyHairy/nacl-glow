@@ -16,9 +16,6 @@
     text-align: center;
 }
 
-#glow_module {
-}
-
 #controls {
     display: inline-block;
     padding: 10px;
@@ -36,4 +33,13 @@ input {
 
 div.input-group {
     padding: 5px 0 5px 0;
+}
+
+div.fps-display {
+    padding: 5px 0 5px 0;
+}
+
+.fps-display div {
+    width: 120px;
+    display: inline-block;
 }

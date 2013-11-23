@@ -26,6 +26,7 @@
 #define GLOW_API_H
 
 #include "ppapi/cpp/var.h"
+#include "ppapi/utility/completion_callback_factory.h"
 
 namespace glow {
 
@@ -35,12 +36,18 @@ class Api {
     public:
 
         Api(Instance& instance);
+        ~Api();
 
         void HandleMessage(const pp::Var& message);
+
+        void BroadcastFps(float processing_fps, float rendering_fps);
 
     private:
 
         Instance& instance;
+        pp::CompletionCallbackFactory<Api>* callback_factory;
+
+        void DoPostMessage(uint32_t result, const pp::Var& message);
 
         Api(const Api&);
         const Api& operator=(const Api&);

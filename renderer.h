@@ -25,6 +25,8 @@
 #ifndef GLOW_RENDERER_H
 #define GLOW_RENDERER_H
 
+#include "sys/time.h"
+
 #include "ppapi/utility/threading/simple_thread.h"
 #include "ppapi/utility/completion_callback_factory.h"
 #include "ppapi/cpp/graphics_2d.h"
@@ -34,6 +36,7 @@
 #include "logger.h"
 #include "surface.h"
 #include "settings.h"
+#include "api.h"
 
 namespace glow {
 
@@ -42,7 +45,8 @@ class Renderer {
 
         Renderer(
             const pp::InstanceHandle& handle,
-            Logger* logger,
+            Logger& logger,
+            Api& api,
             const Settings& settings,
             pp::Graphics2D* graphics
         );
@@ -60,7 +64,8 @@ class Renderer {
     private:
    
         pp::InstanceHandle handle;
-        Logger* logger;
+        Logger& logger;
+        Api& api;
         pp::Graphics2D* graphics;
         pp::SimpleThread* thread;
         pp::CompletionCallbackFactory<Renderer>* callback_factory;
@@ -73,6 +78,12 @@ class Renderer {
 
         void RenderSurface();
         void RenderCallback(uint32_t status);
+
+        void processFps(
+            timeval& fps_reference,
+            uint32_t& processing_counter,
+            uint32_t& render_counter
+        );
 
         void DoMoveTo(uint32_t status, const pp::Point& x);
         void DoDrawTo(uint32_t status, const pp::Point& x);

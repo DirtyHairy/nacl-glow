@@ -51,7 +51,7 @@ void Instance::DidChangeView(const pp::View& view) {
         graphics = new pp::Graphics2D(this, extent, true);
         BindGraphics(*graphics);
 
-        renderer = new Renderer(this, logger, settings, graphics);
+        renderer = new Renderer(this, *logger, *api, settings, graphics);
         renderer->Start();
     }
 

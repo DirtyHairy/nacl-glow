@@ -24,10 +24,6 @@
 
 #include "renderer.h"
 
-#include <exception>
-#include <sstream>
-
-#include "sys/time.h"
 #include "unistd.h"
 
 #include "ppapi/cpp/message_loop.h"
@@ -43,26 +39,33 @@ void dispatch(pp::MessageLoop&, void* user_data) {
     static_cast<glow::Renderer*>(user_data)->_Dispatch();
 }
 
-uint32_t delay(timeval& reference, uint32_t delay)
+
+int32_t TimeDifference(const timeval& t1, const timeval& t2) {
+    return (t2.tv_sec - t1.tv_sec) * 1000000 + (t2.tv_usec - t1.tv_usec);
+}
+
+uint32_t delay(const timeval& reference, uint32_t delay)
 {
     timeval current;
     if (gettimeofday(&current, NULL) != 0) return 0;
 
-    int32_t actual_delay = delay
-        - (current.tv_sec - reference.tv_sec) * 1000000
-        - current.tv_usec + reference.tv_usec;
+    int32_t actual_delay = delay - TimeDifference(reference, current);
 
-    if (actual_delay > 0 && static_cast<uint32_t>(actual_delay) <= delay) {
-        usleep(delay);
+    if (actual_delay > static_cast<int32_t>(delay)) {
+        actual_delay = delay;
     }
-    return delay;
+
+    if (actual_delay > 0) {
+        usleep(actual_delay);
+    }
+    return actual_delay;
 }
 
 inline uint32_t PixelRGB(const uint8_t r, const uint8_t g, const uint8_t b) {
     return 0xFF000000 | (b << 16) | (g << 8) | r;
 }
 
-class EQuit : public std::exception {};
+class EQuit {};
 
 }
 
@@ -70,12 +73,14 @@ namespace glow {
 
 Renderer::Renderer(
     const pp::InstanceHandle& handle,
-    Logger* logger,
+    Logger& logger,
+    Api& api,
     const Settings& settings,
     pp::Graphics2D* graphics)
 :
    handle(handle),
    logger(logger),
+   api(api),
    graphics(graphics),
    thread(NULL),
    surface(NULL),
@@ -150,12 +155,13 @@ void Renderer::_Dispatch() {
     pp::Size extent = graphics->size();
     surface = new Surface(extent.width(), extent.height());
 
-    timeval timestamp;
+    timeval timestamp, fps_reference;
     pp::MessageLoop& message_loop = thread->message_loop();
-    std::stringstream ss;
-    uint32_t lost_frames = 0;
+    uint32_t render_counter = 0, processing_counter = 0;
 
     try {
+        if (gettimeofday(&fps_reference, NULL) != 0) throw EQuit();
+
         while (true) {
             if (gettimeofday(&timestamp, NULL) != 0) throw EQuit();
 
@@ -177,22 +183,41 @@ void Renderer::_Dispatch() {
             }
 
             if (!render_pending) {
-                if (lost_frames > 0) {
-                    ss.str("");
-                    ss << "Render: skipped " << lost_frames << " frames";
-                    logger->Log(ss.str());
-                    lost_frames = 0;
-                }
+                render_counter++;
                 render_pending = true;
                 RenderSurface();
-            } else {
-                lost_frames++;
             }
+
+            processing_counter++;
+
+            processFps(fps_reference, processing_counter, render_counter);
 
             delay(timestamp, 1000000 / settings.Fps());
         }
     }
     catch(EQuit) {}
+}
+
+void Renderer::processFps(
+    timeval& fps_reference,
+    uint32_t& processing_counter,
+    uint32_t& rendering_counter)
+{
+    timeval measurement;
+    if (gettimeofday(&measurement, NULL) != 0) throw EQuit();
+
+    float time_difference = TimeDifference(fps_reference, measurement) / 1000000.;
+    if (time_difference > 1.) {
+        float processing_fps =
+                static_cast<float>(processing_counter) / time_difference,
+              rendering_fps =
+                static_cast<float>(rendering_counter) / time_difference;
+
+        api.BroadcastFps(processing_fps, rendering_fps);
+
+        processing_counter = rendering_counter = 0;
+        fps_reference = measurement;
+    }
 }
 
 void Renderer::RenderSurface() {

@@ -36,6 +36,10 @@ THE SOFTWARE.
             decayExp: 'decay_exp',
             decayLin: 'decay_lin',
             fps: 'target_fps'
+        },
+        fpsDisplays = {
+            processingFps: 'fps_processing',
+            renderingFps: 'fps_rendering'
         };
 
     function marshall(name, value) {
@@ -60,13 +64,24 @@ THE SOFTWARE.
 
         if (subject == 'settingsBroadcast') {
             onSettingsBroadcast(message.data);
+        } else if (subject == 'fpsBroadcast') {
+            onFpsBroadcast(message.data);
         } else if (subject == 'error') {
-            console.log('module reports error: ', message.data);    
+            console.log('module reports error: ', message.data);
         } else {
             console.log(message.data);
         }
     }
     
+    function onFpsBroadcast(message) {
+        for (name in fpsDisplays) {
+            if (message[name]) {
+                getFpsMonitor(fpsDisplays[name]).innerHTML =
+                    message[name].toFixed(3);
+            }
+        }
+    }
+
     function onSettingsBroadcast(message) {
         for (var name in inputs) (function(name) {
             var container = inputs[name],
@@ -114,6 +129,10 @@ THE SOFTWARE.
         return container.getElementsByTagName('span')[0];
     }
 
+    function getFpsMonitor(container) {
+        return container.getElementsByTagName('span')[0];
+    }
+
     function onDocumentLoad() {
         loader = document.getElementById('loader');
         module = document.getElementById('glow_module');
@@ -127,6 +146,10 @@ THE SOFTWARE.
                 onInputChange(name, true);
             }, true);
         })(name);
+
+        for (var name in fpsDisplays) {
+            fpsDisplays[name] = document.getElementById(fpsDisplays[name]);
+        }
 
         window.onModuleLoad = onModuleLoad;
         if (window.moduleLoaded) onModuleLoad();
@@ -170,6 +193,12 @@ THE SOFTWARE.
         />
 </div>
 <div id="controls">
+    <div id="fps_processing" class="fps-display">
+        <div>Processing FPS:</div><span>N/A</span>
+    </div>
+    <div id="fps_rendering" class="fps-display">
+        <div>Rendering FPS:</div><span>N/A</span>
+    </div>
     <div class="input-group" id="radius">
         <label for="radius">Radius: <span></span></label>
         <input type="range" min="0" max="100" step="1" value="0" name="radius"/>

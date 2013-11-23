@@ -25,7 +25,9 @@
 #include "api.h"
 
 #include <string>
+
 #include "ppapi/cpp/var_dictionary.h"
+#include "ppapi/cpp/core.h"
 
 #include "settings.h"
 #include "instance.h"
@@ -127,7 +129,15 @@ void ApplyChangeSettingsMessage(
 
 namespace glow {
 
-Api::Api(Instance& instance) : instance(instance) {}
+Api::Api(Instance& instance) :
+    instance(instance)
+{
+    callback_factory = new pp::CompletionCallbackFactory<Api>(this);
+}
+
+Api::~Api() {
+    delete callback_factory;
+}
 
 void Api::HandleMessage(const pp::Var& message) {
     try {
@@ -148,6 +158,21 @@ void Api::HandleMessage(const pp::Var& message) {
     } catch (EInvalidMessage& e) {
         instance.PostMessage(BuildErrorMessage("invalid message", &message));
     }
+}
+
+void Api::BroadcastFps(float processing_fps, float rendering_fps) {
+    pp::VarDictionary msg;
+
+    msg.Set("subject", "fpsBroadcast");
+    msg.Set("processingFps", static_cast<double>(processing_fps));
+    msg.Set("renderingFps", static_cast<double>(rendering_fps));
+
+    pp::Module::Get()->core()->CallOnMainThread(0,
+        callback_factory->NewCallback(&Api::DoPostMessage, msg));
+}
+
+void Api::DoPostMessage(uint32_t result, const pp::Var& message) {
+    instance.PostMessage(message);
 }
 
 }
