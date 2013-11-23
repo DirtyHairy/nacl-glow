@@ -81,9 +81,7 @@ Renderer::Renderer(
    surface(NULL),
    drawing(false),
    settings(settings)
-{
-    callback_factory = new pp::CompletionCallbackFactory<Renderer>(this);
-}
+{}
 
 Renderer::~Renderer() {
     Stop();
@@ -108,6 +106,11 @@ void Renderer::Stop() {
     thread->Join();
     delete thread;
     thread = NULL;
+
+    if (callback_factory != NULL) {
+        delete callback_factory;
+        callback_factory = NULL;
+    }
 
     delete surface;
 }
@@ -149,6 +152,8 @@ void Renderer::DoSetDrawing(uint32_t status, bool isDrawing) {
 void Renderer::_Dispatch() {
     pp::Size extent = graphics->size();
     surface = new Surface(extent.width(), extent.height());
+
+    callback_factory = new pp::CompletionCallbackFactory<Renderer>(this);
 
     timeval timestamp;
     pp::MessageLoop& message_loop = thread->message_loop();
