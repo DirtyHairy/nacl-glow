@@ -27,7 +27,7 @@ TOOLCHAIN_arm = $(NACL_SDK_ROOT)/toolchain/linux_arm_newlib
 
 INCLUDE = -I$(NACL_SDK_ROOT)/include
 LIBS = -lppapi_cpp -lppapi
-SOURCE = glow.cc logger.cc renderer.cc surface.cc settings.cc
+SOURCE = glow.cc logger.cc renderer.cc surface.cc settings.cc instance.cc api.cc
 CXXFLAGS = -O2 -Wall
 
 LIB_FLAVOR = $(if $(RELEASE),Release,Debug)
