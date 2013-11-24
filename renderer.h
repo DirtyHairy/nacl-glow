@@ -47,7 +47,7 @@ class Renderer {
             const pp::InstanceHandle& handle,
             Logger& logger,
             Api& api,
-            const Settings& settings,
+            const volatile Settings& settings,
             pp::Graphics2D* graphics
         );
         ~Renderer();
@@ -72,7 +72,7 @@ class Renderer {
         Surface* surface;
         bool render_pending;
         bool drawing;
-        const Settings& settings;
+        const volatile Settings& settings;
 
         pp::Point current_position;
 

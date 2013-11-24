@@ -36,12 +36,21 @@
 
 namespace glow {
 
+/**
+ * The instance class derives from pp::Instance and houses the program's actual
+ * logic. For each instance of the module, a separate Instance instance is
+ * created by the API (by calling our factory defined on the Module class).
+ */
 class Instance : public pp::Instance {
     public:
 
         explicit Instance(PP_Instance instance);
         ~Instance();
 
+        /**
+         * The API provides virtual stub methods which we can override in order
+         * to react on external events.
+         */
         virtual void DidChangeView(const pp::View& view);
         virtual bool HandleInputEvent(const pp::InputEvent& event);
         virtual void HandleMessage(const pp::Var& message);

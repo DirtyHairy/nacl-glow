@@ -34,31 +34,31 @@ class Settings {
 
         Settings();
 
-        float Bleed() const {
+        float Bleed() const volatile {
             return bleed;
         }
         Settings& Bleed(float bleed);
 
-        float Decay_exp() const {
+        float Decay_exp() const volatile {
             return decay_exp;
         }
         Settings& Decay_exp(float decay_exp);
 
-        float Decay_factor() const {
+        float Decay_factor() const volatile {
             return decay_factor;
         }
 
-        uint8_t Decay_lin() const {
+        uint8_t Decay_lin() const volatile {
             return decay_lin;
         }
         Settings& Decay_lin(uint8_t decay_lin);
 
-        uint32_t Radius() const {
+        uint32_t Radius() const volatile {
             return radius;
         }
         Settings& Radius(uint32_t radius);
 
-        uint8_t Fps() const {
+        uint8_t Fps() const volatile {
             return fps;
         }
         Settings& Fps(uint8_t fps);

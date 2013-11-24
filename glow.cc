@@ -22,20 +22,22 @@
  * THE SOFTWARE.
  */
 
-#include <string>
-#include <sstream>
-
 #include "instance.h"
 
 namespace glow {
 
+/**
+ * Every NaCl program must define a module class which derives from pp::Module
+ * and implements the CreateInstance factory method.
+ */
 class Module : public pp::Module {
     public:
-    
-        Module() : pp::Module() {}
 
-        ~Module() {}
-
+        /**
+         * The actual program logic goes into an Instance class which extends
+         * pp::Instance. This method is required and works as a factory for new
+         * Instance instances.
+         */
         pp::Instance* CreateInstance(PP_Instance instance) {
             return new Instance(instance);
         }
@@ -45,6 +47,10 @@ class Module : public pp::Module {
 
 namespace pp {
 
+/**
+ * The programs entry point is the pp::CreateModule method which creates a new
+ * instance of the Module class defined by the program
+ */
 Module* CreateModule() {
     return new glow::Module();
 }

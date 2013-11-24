@@ -75,7 +75,7 @@ Renderer::Renderer(
     const pp::InstanceHandle& handle,
     Logger& logger,
     Api& api,
-    const Settings& settings,
+    const volatile Settings& settings,
     pp::Graphics2D* graphics)
 :
    handle(handle),
