@@ -21,7 +21,7 @@ a built version [here](http://www.cspeckner.de/nacl/glow). The program builds
 fine with pepper version 30.
 
 **Native client currently only works in chrome. If the module fails to load,
-make sure that native client is enabled in the chrome [settings](chrome://flags)**
+make sure that native client is enabled at chrome://flags**
 
 ## The controls
 
