@@ -19,3 +19,26 @@ You'll have to place the html, the `.nmf` manifest file and the
 `.pexe` executables on a webserver in order to try out the program. You can find
 a built version [here](http://www.cspeckner.de/nacl/glow). The program builds
 fine with pepper version 30.
+
+**Native client currently only works in chrome. If the module fails to load,
+make sure that native client is enabled in the chrome [settings](chrome://flags)**
+
+## The controls
+
+* **Radius** Line radius.
+* **Bleed** The percentage of intensity distritibuted from a pixel to its eight
+  neightbours during each frame. Rounding errors lead to decay over time due to
+  bleeding even if the decay controls are set to zero. Zero disables bleeding.
+* **Exponential decay** Controls a factor between zero and one which is multiplied
+  with each pixels intensity each frame after bleeding. More precisely, it is 15
+  minus the "half-time frame count". Zero disables exponential decay.
+* **Linear decay** Amount of intensity subtracted each frame after bleeding and
+  exponential decay.
+* **Target FPS** Frames per second aimed for by the program. Note that the rate
+  control algorithm is not very sophisticated, so this will get increasingly
+  inaccurate for higher FPS.
+
+In addition, the two FPS displays show the actual measured FPS. *Processing FPS*
+are the FPS at which the processing loop runs, while *Rendering FPS* are the FPS
+rendered by the browser and which might be lower than the number of frames
+processed.

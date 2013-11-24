@@ -44,6 +44,10 @@ class Settings {
         }
         Settings& Decay_exp(float decay_exp);
 
+        float Decay_factor() const {
+            return decay_factor;
+        }
+
         uint8_t Decay_lin() const {
             return decay_lin;
         }
@@ -61,9 +65,11 @@ class Settings {
 
     private:
         
-        float bleed, decay_exp;
+        float bleed;
         uint8_t decay_lin, fps;
         uint32_t radius;
+
+        float decay_exp, decay_factor;
 };
 
 }

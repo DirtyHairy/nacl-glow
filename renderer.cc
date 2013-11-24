@@ -161,13 +161,14 @@ void Renderer::_Dispatch() {
 
     try {
         if (gettimeofday(&fps_reference, NULL) != 0) throw EQuit();
+        api.BroadcastFps(settings.Fps(), settings.Fps());
 
         while (true) {
             if (gettimeofday(&timestamp, NULL) != 0) throw EQuit();
 
             surface->Decay(
                 settings.Bleed(),
-                settings.Decay_exp(),
+                settings.Decay_factor(),
                 settings.Decay_lin()
             );
 

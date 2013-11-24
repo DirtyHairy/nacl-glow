@@ -24,9 +24,11 @@
 
 #include "settings.h"
 
+#include <cmath>
+
 namespace {
 
-template<typename T> bool constrain(T value, T min, T max) {
+template<typename T> T constrain(T value, T min, T max) {
     if (value < min) return min;
     if (value > max) return max;
     return value;
@@ -37,22 +39,22 @@ template<typename T> bool constrain(T value, T min, T max) {
 namespace glow {
 
 Settings::Settings() :
-    bleed(0.95),
-    decay_exp(0.02),
+    bleed(0.8),
     decay_lin(1),
     fps(20),
-    radius(3)
-{}
+    radius(5)
+{
+    Decay_exp(10.);
+}
 
 Settings& Settings::Bleed(float _bleed) {
     bleed = constrain(_bleed, 0.f, 1.f);
-    bleed = _bleed;
     return *this;
 }
 
-Settings& Settings::Decay_exp(float _decay_exp) {    
-    decay_exp = constrain(_decay_exp, 0.f, 1.f);
-    decay_exp = _decay_exp;
+Settings& Settings::Decay_exp(float _decay_exp) {
+    decay_exp = constrain(_decay_exp, 0.f, 15.f);
+    decay_factor = decay_exp == 0 ? 0 : powf(0.5, (15. - decay_exp));
     return *this;
 }
 
