@@ -76,10 +76,6 @@ class Instance : public pp::Instance {
             return *logger;
         }
 
-        Renderer* GetRenderer() {
-            return renderer;
-        }
-
     private:
 
         pp::Graphics2D* graphics;

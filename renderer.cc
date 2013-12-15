@@ -24,7 +24,7 @@
 
 #include "renderer.h"
 
-#include "unistd.h"
+#include <unistd.h>
 
 #include "ppapi/cpp/completion_callback.h"
 #include "ppapi/cpp/image_data.h"
@@ -125,9 +125,9 @@ void Renderer::Stop() {
     }
 
     // SimpleThread::Join posts a quit message to the message loop, closes it
-    // and waits for the threads to join. Closing the message loop will cause
-    // the main loop to terminate, after which the threads join and the thread
-    // and surface instances are destroyed.
+    // and waits for the threads to join. After closing the loop,
+    // pp::MessageLoop::Run will crash, so we have to make sure that the
+    // rendering loop stops pumping the message loop before joining.
     logger.Log("Waiting for rendering loop to quit...");
 
     message_loop_lock.Acquire();
@@ -249,12 +249,13 @@ void Renderer::Dispatch() {
         delay(timestamp, 1000000 / settings.Fps());
     }
 
-    delete surface;
-
     logger.Log("Rendering loop finished.");
 }
 
 bool Renderer::PumpMessageLoop() {
+    // pp::AutoLock is a useful little helper which acquires a lock on
+    // creation and releases it on destruction. This allows us to quit the
+    // function anytime without caring about manually releasing the lock.
     pp::AutoLock lock(message_loop_lock);
     pp::MessageLoop& message_loop(thread->message_loop());
 
@@ -262,8 +263,8 @@ bool Renderer::PumpMessageLoop() {
     // loop. This ensures that Run() returns after all messages have
     // been processed, effectively polling the loop.
     //
-    // Once the loop has been closed for good, those two will fail,
-    // causing the main loop to terminate.
+    // If quit requested is set, we must assume that the loop has been closed
+    // for good and return immediatelly.
     if (quit_requested) return false;
     if (message_loop.PostQuit(false) != PP_OK) return false;
     if (message_loop.Run() != PP_OK) return false;

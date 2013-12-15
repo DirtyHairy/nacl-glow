@@ -41,8 +41,7 @@
         fpsDisplays = {
             processingFps: 'fps_processing',
             renderingFps: 'fps_rendering'
-        },
-        startButton, stopButton;
+        };
 
     /**
      * Prepare a value for sending it to the module by ensuring the correct
@@ -126,23 +125,6 @@
         }
     }
 
-
-    function onStartButtonClick() {
-        if (module) {
-            module.postMessage({
-                subject: 'start'
-            });
-        }
-    }
-
-    function onStopButtonClick() {
-        if (module) {
-            module.postMessage({
-                subject: 'stop'
-            });
-        }
-    }
-
     /**
      * Build a settings update message and post it to the module
      */
@@ -198,11 +180,6 @@
         for (var name in fpsDisplays) {
             fpsDisplays[name] = document.getElementById(fpsDisplays[name]);
         }
-
-        startButton = document.getElementById('startbutton');
-        stopButton = document.getElementById('stopbutton');
-        startButton.addEventListener('click', onStartButtonClick);
-        stopButton.addEventListener('click', onStopButtonClick);
 
         // Export the module load handler.
         scope.onModuleLoad = onModuleLoad;

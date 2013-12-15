@@ -25,7 +25,7 @@
 #ifndef GLOW_RENDERER_H
 #define GLOW_RENDERER_H
 
-#include "sys/time.h"
+#include <sys/time.h>
 
 #include "ppapi/cpp/message_loop.h"
 #include "ppapi/utility/threading/simple_thread.h"
@@ -34,6 +34,7 @@
 #include "ppapi/cpp/graphics_2d.h"
 #include "ppapi/cpp/instance_handle.h"
 #include "ppapi/cpp/point.h"
+
 
 #include "logger.h"
 #include "surface.h"
@@ -84,6 +85,10 @@ class Renderer {
          */
         pp::SimpleThread* thread;
 
+        /**
+         * We need those in order to make sure that the message loop will not
+         * be polled again before joining threads and stopping the renderer.
+         */
         pp::Lock message_loop_lock;
         bool quit_requested;
 
