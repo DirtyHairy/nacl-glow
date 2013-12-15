@@ -24,6 +24,7 @@ RELEASE = 1
 
 TOOLCHAIN_x86 = $(NACL_SDK_ROOT)/toolchain/linux_x86_newlib
 TOOLCHAIN_arm = $(NACL_SDK_ROOT)/toolchain/linux_arm_newlib
+TOOLCHAIN_pnacl = $(NACL_SDK_ROOT)/toolchain/linux_pnacl
 
 INCLUDE = -I$(NACL_SDK_ROOT)/include
 LIBS = -lppapi_cpp -lppapi
@@ -47,20 +48,32 @@ CXX_arm = $(PREFIX_arm)-g++
 STRIP_arm = $(PREFIX_arm)-strip
 LDFLAGS_arm = -L$(NACL_SDK_ROOT)/lib/newlib_arm/$(LIB_FLAVOR) $(LIBS)
 
+PREFIX_pnacl = $(TOOLCHAIN_pnacl)/bin/pnacl
+CXX_pnacl = $(PREFIX_pnacl)-clang++
+STRIP_pnacl = $(PREFIX_pnacl)-strip
+FINALIZE_pnacl = $(PREFIX_pnacl)-finalize
+LDFLAGS_pnacl = -L$(NACL_SDK_ROOT)/lib/pnacl/$(LIB_FLAVOR) $(LIBS)
+
 BIN_64 = glow_64.pexe
 BIN_32 = glow_32.pexe
 BIN_arm = glow_arm.pexe
+BIN_pnacl = glow_pnacl.pexe
 BIN = $(BIN_64) $(BIN_32) $(BIN_arm)
 
 OBJECTS_64 = $(patsubst %.cc,obj_64/%.o,$(SOURCE))
 OBJECTS_32 = $(patsubst %.cc,obj_32/%.o,$(SOURCE))
 OBJECTS_arm = $(patsubst %.cc,obj_arm/%.o,$(SOURCE))
+OBJECTS_pnacl = $(patsubst %.cc,obj_pnacl/%.o,$(SOURCE))
 OBJECTS = $(OBJECTS_64) $(OBJECTS_32) $(OBJECTS_arm)
 
-GARBAGE = $(OBJECTS) obj_64 obj_32 obj_arm Makefile.depend
-SEMIGARBAGE = $(BIN)
+GARBAGE = $(OBJECTS) obj_64 obj_32 obj_arm obj_pnacl Makefile.depend
+SEMIGARBAGE = $(BIN) $(BIN_pnacl)
 
-all: $(BIN)
+all: native
+
+native :$(BIN)
+
+pnacl: $(BIN_pnacl)
 
 $(BIN_64) : $(OBJECTS_64)
 	$(CXX_64) -o $@ $^ $(LDFLAGS_64)
@@ -74,6 +87,11 @@ $(BIN_arm) : $(OBJECTS_arm)
 	$(CXX_arm) -o $@ $^ $(LDFLAGS_arm)
 	[ -n "$(RELEASE)" ] && $(STRIP_arm) $@ || true
 
+$(BIN_pnacl) : $(OBJECTS_pnacl)
+	$(CXX_pnacl) -o $@ $^ $(LDFLAGS_pnacl)
+	[ -n "$(RELEASE)" ] && $(STRIP_pnacl) $@ || true
+	$(FINALIZE_pnacl) $@
+
 $(OBJECTS_64) : obj_64/%.o : %.cc
 	-test -d obj_64 || mkdir obj_64
 	$(CXX_64) $(CXXFLAGS) $(INCLUDE) -o $@ -c $<
@@ -86,6 +104,10 @@ $(OBJECTS_arm) : obj_arm/%.o : %.cc
 	-test -d obj_arm || mkdir obj_arm
 	$(CXX_arm) $(CXXFLAGS) $(INCLUDE) -o $@ -c $<
 
+$(OBJECTS_pnacl) : obj_pnacl/%.o : %.cc
+	-test -d obj_pnacl || mkdir obj_pnacl
+	$(CXX_pnacl) $(CXXFLAGS) $(INCLUDE) -o $@ -c $<
+
 clean:
 	-rm -fr $(GARBAGE)
 
@@ -96,5 +118,6 @@ Makefile.depend: Makefile
 	$(CXX_64) $(CXXFLAGS) $(INCLUDE) -MM $(SOURCE) | sed -e 's/^\(.*\.o:\)/obj_64\/\1/' > $@
 	$(CXX_32) $(CXXFLAGS) $(INCLUDE) -MM $(SOURCE) | sed -e 's/^\(.*\.o:\)/obj_32\/\1/' >> $@
 	$(CXX_arm) $(CXXFLAGS) $(INCLUDE) -MM $(SOURCE) | sed -e 's/^\(.*\.o:\)/obj_arm\/\1/' >> $@
+	test -x $(CXX_pnacl) && $(CXX_pnacl) $(CXXFLAGS) $(INCLUDE) -MM $(SOURCE) | sed -e 's/^\(.*\.o:\)/obj_pnacl\/\1/' >> $@
 
 include Makefile.depend
