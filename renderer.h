@@ -29,6 +29,7 @@
 
 #include "ppapi/cpp/message_loop.h"
 #include "ppapi/utility/threading/simple_thread.h"
+#include "ppapi/utility/threading/lock.h"
 #include "ppapi/utility/completion_callback_factory.h"
 #include "ppapi/cpp/graphics_2d.h"
 #include "ppapi/cpp/instance_handle.h"
@@ -83,6 +84,9 @@ class Renderer {
          */
         pp::SimpleThread* thread;
 
+        pp::Lock message_loop_lock;
+        bool quit_requested;
+
         /**
          * pp::CompletionCallbackFactory allows to create
          * pp::CompletionCallback instances from instance methods. The
@@ -114,10 +118,11 @@ class Renderer {
          */
         static void DispatchThreadCallback(pp::MessageLoop&, void* userdata);
 
+        bool PumpMessageLoop();
         void RenderSurface();
         void RenderCallback(uint32_t status);
 
-        void processFps(
+        bool processFps(
             timeval& fps_reference,
             uint32_t& processing_counter,
             uint32_t& render_counter

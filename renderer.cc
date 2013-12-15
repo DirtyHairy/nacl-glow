@@ -63,8 +63,6 @@ inline uint32_t PixelRGB(const uint8_t r, const uint8_t g, const uint8_t b) {
     return 0xFF000000 | (b << 16) | (g << 8) | r;
 }
 
-class EQuit {};
-
 }
 
 namespace glow {
@@ -81,6 +79,7 @@ Renderer::Renderer(
    api(api),
    graphics(graphics),
    thread(NULL),
+   quit_requested(false),
    surface(NULL),
    drawing(false),
    settings(settings)
@@ -113,7 +112,10 @@ void Renderer::Start() {
     }
 
     // Create a new thread and dispatch it.
+    logger.Log("Starting rendering thread...");
+
     thread = new pp::SimpleThread(handle);
+    quit_requested = false;
     thread->StartWithFunction(&DispatchThreadCallback, this);
 }
 
@@ -126,11 +128,17 @@ void Renderer::Stop() {
     // and waits for the threads to join. Closing the message loop will cause
     // the main loop to terminate, after which the threads join and the thread
     // and surface instances are destroyed.
+    logger.Log("Waiting for rendering loop to quit...");
+
+    message_loop_lock.Acquire();
+    quit_requested = true;
+    message_loop_lock.Release();
+
     thread->Join();
     delete thread;
     thread = NULL;
 
-    delete surface;
+    logger.Log("Renderer successfully stopped.");
 }
 
 /**
@@ -143,7 +151,7 @@ void Renderer::Stop() {
 void Renderer::MoveTo(const pp::Point& x) {
     // Generate a callback from the factory. Note how the factory binds the
     // value of x.
-    thread->message_loop().PostWork(callback_factory->NewCallback(
+    if (thread) thread->message_loop().PostWork(callback_factory->NewCallback(
         &Renderer::DoMoveTo, x)
     );
 }
@@ -152,7 +160,7 @@ void Renderer::MoveTo(const pp::Point& x) {
  * See above.
  */
 void Renderer::DrawTo(const pp::Point& x) {
-    thread->message_loop().PostWork(callback_factory->NewCallback(
+    if (thread) thread->message_loop().PostWork(callback_factory->NewCallback(
         &Renderer::DoDrawTo, x)
     );
 }
@@ -161,7 +169,7 @@ void Renderer::DrawTo(const pp::Point& x) {
  * See above.
  */
 void Renderer::SetDrawing(bool isDrawing) {
-    thread->message_loop().PostWork(callback_factory->NewCallback(
+    if (thread)thread->message_loop().PostWork(callback_factory->NewCallback(
         &Renderer::DoSetDrawing, isDrawing)
     );
 }
@@ -194,74 +202,86 @@ void Renderer::Dispatch() {
     surface = new Surface(extent.width(), extent.height());
 
     timeval timestamp, fps_reference;
-    // pp::SimpleThread automatically creates a pp::MessageLoop and associates
-    // it with the thread -> get it.
-    pp::MessageLoop& message_loop = thread->message_loop();
     uint32_t render_counter = 0, processing_counter = 0;
 
-    try {
-        // Initialize the reference timestamp for FPS calculation
-        if (gettimeofday(&fps_reference, NULL) != 0) throw EQuit();
+    // Initialize the reference timestamp for FPS calculation
+    if (gettimeofday(&fps_reference, NULL) != 0) return;
 
-        // Broadcast the reference FPS as initial value
-        api.BroadcastFps(settings.Fps(), settings.Fps());
+    // Broadcast the reference FPS as initial value
+    api.BroadcastFps(settings.Fps(), settings.Fps());
 
-        while (true) {
-            if (gettimeofday(&timestamp, NULL) != 0) throw EQuit();
+    logger.Log("Rendering loop started.");
 
-            surface->Decay(
-                settings.Bleed(),
-                settings.Decay_factor(),
-                settings.Decay_lin()
+    render_pending = false;
+
+    while (true) {
+        if (gettimeofday(&timestamp, NULL) != 0) break;
+
+        surface->Decay(
+            settings.Bleed(),
+            settings.Decay_factor(),
+            settings.Decay_lin()
+        );
+
+        if (!PumpMessageLoop()) break;
+
+        if (drawing){
+            surface->Circle(
+                current_position.x(),
+                current_position.y(),
+                settings.Radius()
             );
-
-            // Calling PostQuit(false) posts a quit message without closing the
-            // loop. This ensures that Run() returns after all messages have
-            // been processed, effectively polling the loop.
-            //
-            // Once the loop has been closed for good, those two will fail,
-            // causing the main loop to terminate.
-            if (message_loop.PostQuit(false) != PP_OK) throw EQuit();
-            if (message_loop.Run() != PP_OK) throw EQuit();
-
-            if (drawing){
-                surface->Circle(
-                    current_position.x(),
-                    current_position.y(),
-                    settings.Radius()
-                );
-            }
-
-            // Checking whether the previous render request has completed
-            // before rendering avoid unnecessary work and allows us to count
-            // the rendering FPS separately from the processing FPS.
-            if (!render_pending) {
-                render_counter++;
-                render_pending = true;
-                RenderSurface();
-            }
-
-            processing_counter++;
-
-            processFps(fps_reference, processing_counter, render_counter);
-
-            delay(timestamp, 1000000 / settings.Fps());
         }
+
+        // Checking whether the previous render request has completed
+        // before rendering avoid unnecessary work and allows us to count
+        // the rendering FPS separately from the processing FPS.
+        if (!render_pending) {
+            render_counter++;
+            render_pending = true;
+            RenderSurface();
+        }
+
+        processing_counter++;
+
+        if (!processFps(fps_reference, processing_counter, render_counter)) break;
+
+        delay(timestamp, 1000000 / settings.Fps());
     }
-    catch(EQuit) {}
+
+    delete surface;
+
+    logger.Log("Rendering loop finished.");
+}
+
+bool Renderer::PumpMessageLoop() {
+    pp::AutoLock lock(message_loop_lock);
+    pp::MessageLoop& message_loop(thread->message_loop());
+
+    // Calling PostQuit(false) posts a quit message without closing the
+    // loop. This ensures that Run() returns after all messages have
+    // been processed, effectively polling the loop.
+    //
+    // Once the loop has been closed for good, those two will fail,
+    // causing the main loop to terminate.
+    if (quit_requested) return false;
+    if (message_loop.PostQuit(false) != PP_OK) return false;
+    if (message_loop.Run() != PP_OK) return false;
+
+    return true;
 }
 
 /**
  * Each second we calculate calculate the FPS rendered and processed and
  * broadcast them via the API.
  */
-void Renderer::processFps(
+bool Renderer::processFps(
     timeval& fps_reference,
     uint32_t& processing_counter,
     uint32_t& rendering_counter)
 {
     timeval measurement;
-    if (gettimeofday(&measurement, NULL) != 0) throw EQuit();
+    if (gettimeofday(&measurement, NULL) != 0) return false;
 
     float time_difference = TimeDifference(fps_reference, measurement) / 1000000.;
     if (time_difference > 1.) {
@@ -275,6 +295,8 @@ void Renderer::processFps(
         processing_counter = rendering_counter = 0;
         fps_reference = measurement;
     }
+
+    return true;
 }
 
 /**

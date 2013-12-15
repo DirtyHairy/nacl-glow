@@ -31,6 +31,7 @@
 
 #include "settings.h"
 #include "instance.h"
+#include "renderer.h"
 
 namespace {
 
@@ -184,6 +185,14 @@ void Api::HandleMessage(const pp::Var& message) {
             // Try to unwrap all modified settings from the message and apply
             // them to the settings object.
             ApplyChangeSettingsMessage(msg, instance.GetSettings());
+
+        } else if (subject == "start") {
+            Renderer* renderer = instance.GetRenderer();
+            if (renderer) renderer->Start();
+
+        } else if (subject == "stop") {
+            Renderer* renderer = instance.GetRenderer();
+            if (renderer) renderer->Stop();
 
         } else {
             throw EInvalidMessage();

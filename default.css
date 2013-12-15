@@ -43,3 +43,9 @@ div.fps-display {
     width: 120px;
     display: inline-block;
 }
+
+button {
+    margin-top: 20px;
+    margin-right: 20px;
+    width: 80px;
+}
