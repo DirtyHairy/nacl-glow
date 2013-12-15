@@ -29,6 +29,14 @@
 
 namespace glow {
 
+/**
+ * The Settings object is a container for the various parameters controlling
+ * the rendering process. We will be calling the getters from the rendering
+ * thread, while the main thread will call the setters, so the getters are
+ * marked as volatile in order to ensure that no values are cached in
+ * registers. As any race between getters and setters is not harmful to the
+ * program logic, we don't need to use mutexes to ensure exclusive access.
+ */
 class Settings {
     public:
 
@@ -39,11 +47,19 @@ class Settings {
         }
         Settings& Bleed(float bleed);
 
+        /**
+         * The decay factor is not well suited for direct slider control,
+         * so we map it to 15 minus the amount of half-time frames. The decay
+         * factor is calculated from this on the fly.
+         */
         float Decay_exp() const volatile {
             return decay_exp;
         }
         Settings& Decay_exp(float decay_exp);
 
+        /**
+         * See above.
+         */
         float Decay_factor() const volatile {
             return decay_factor;
         }

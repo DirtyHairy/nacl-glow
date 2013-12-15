@@ -45,6 +45,11 @@ Surface::~Surface() {
 }
 
 void Surface::Decay(float bleed, float decay_exp, uint8_t decay_lin) {
+    // We use integer arithmetics in order to steer clear of potential
+    // performance hits on ARM. In order to increase numeric accuracy, the
+    // 8-bit grayscale values are mapped to 32 bits by multiplication /
+    // division. This factor is chosen to maximize precision while avoiding
+    // overflows.
     const uint32_t base = 1 << 20;
 
     int32_t     bleed_neightbours = nearbyint(bleed / 8. * static_cast<float>(base)),

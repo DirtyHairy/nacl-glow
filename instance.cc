@@ -35,6 +35,8 @@ Instance::Instance(PP_Instance instance) :
     logger = new Logger(*this);
     api = new Api(*this);
 
+    // This method must be called in order to subscribe to different
+    // classes of input events.
     RequestInputEvents(PP_INPUTEVENT_CLASS_MOUSE);
 }
 
@@ -44,13 +46,20 @@ Instance::~Instance() {
     if (api != NULL) delete api;
 }
 
+/**
+ * We use DidChangeView in order to create a graphics context and an instance
+ * of our renderer class when the module becomes visible for the first time
+ */
 void Instance::DidChangeView(const pp::View& view) {
     pp::Size extent = view.GetRect().size();
 
     if (graphics == NULL) {
+        // In order to display anything we must create a graphics context and
+        // bind it.
         graphics = new pp::Graphics2D(this, extent, true);
         BindGraphics(*graphics);
 
+        // The renderer runs in a separate thread and houses the main loop.
         renderer = new Renderer(this, *logger, *api, settings, graphics);
         renderer->Start();
     }
@@ -58,6 +67,11 @@ void Instance::DidChangeView(const pp::View& view) {
     drawing = false;
 }
 
+/**
+ * The renderer implements turtle-like graphics primitives, MoveTo and DrawTo.
+ * In addition, a circle is drawn at the current curser position if the mouse
+ * button is pressed.
+ */
 bool Instance::HandleInputEvent(const pp::InputEvent& event) {
     if (renderer == NULL) return false;
 
@@ -87,6 +101,9 @@ bool Instance::HandleInputEvent(const pp::InputEvent& event) {
     return false;
 }
 
+/**
+ * Messages are delegated to the API object.
+ */
 void Instance::HandleMessage(const pp::Var& message) {
     api->HandleMessage(message);
 }

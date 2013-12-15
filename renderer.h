@@ -27,6 +27,7 @@
 
 #include "sys/time.h"
 
+#include "ppapi/cpp/message_loop.h"
 #include "ppapi/utility/threading/simple_thread.h"
 #include "ppapi/utility/completion_callback_factory.h"
 #include "ppapi/cpp/graphics_2d.h"
@@ -40,6 +41,9 @@
 
 namespace glow {
 
+/**
+ * The renderer handles the main loop.
+ */
 class Renderer {
     public:
 
@@ -52,14 +56,19 @@ class Renderer {
         );
         ~Renderer();
 
+        /*
+         * Start and stop the thread
+         */
         void Start();
         void Stop();
 
+        /**
+         * These turtle-like graphics methods provide the external interface
+         * available to the main thread.
+         */
         void MoveTo(const pp::Point& x);
         void DrawTo(const pp::Point& x);
         void SetDrawing(bool drawing);
-
-        void _Dispatch();
 
     private:
    
@@ -67,14 +76,43 @@ class Renderer {
         Logger& logger;
         Api& api;
         pp::Graphics2D* graphics;
+
+        /**
+         * pp::SimpleThread is a simple wrapper around a pthread and also
+         * automatically creates a message loop for the thread.
+         */
         pp::SimpleThread* thread;
+
+        /**
+         * pp::CompletionCallbackFactory allows to create
+         * pp::CompletionCallback instances from instance methods. The
+         * callbacks maintain a reference to the instance and can bind up to
+         * three arbitrary arguments (copy semantics).
+         */
         pp::CompletionCallbackFactory<Renderer>* callback_factory;
+
         Surface* surface;
         bool render_pending;
         bool drawing;
+
+        /**
+         * We are going to modify those from the main thread, so we add
+         * volatile just to make sure that the compiler doesn't cache.
+         */
         const volatile Settings& settings;
 
         pp::Point current_position;
+
+        /**
+         * The main loop.
+         */
+        void Dispatch();
+
+        /**
+         * The static dispatcher is called upon thread creation and transfers
+         * control to the main loop on the instance.
+         */
+        static void DispatchThreadCallback(pp::MessageLoop&, void* userdata);
 
         void RenderSurface();
         void RenderCallback(uint32_t status);

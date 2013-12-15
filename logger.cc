@@ -32,9 +32,18 @@ Logger::Logger(pp::Instance& instance) : instance(instance) {}
 
 Logger::~Logger() {}
 
+/**
+ * pp::Instance::LogToConsole logs a message on the javascript console. As the
+ * docu doesn't say anything about thread safety, we use a mutex to be sure no
+ * races can occur.
+ */
 void Logger::Log(const std::string& message) {
     lock.Acquire();
+
+    // Don't be fooled by the fact that we directly pass a string, the compiled
+    // code converts this to a pp::Var by calling the proper constructor.
     instance.LogToConsole(PP_LOGLEVEL_LOG, message);
+
     lock.Release();
 }
 

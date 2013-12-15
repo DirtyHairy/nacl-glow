@@ -35,10 +35,10 @@ class Module : public pp::Module {
 
         /**
          * The actual program logic goes into an Instance class which extends
-         * pp::Instance. This method is required and works as a factory for new
-         * Instance instances.
+         * pp::Instance. This method has to be implemented and works as a factory
+         * for new Instance instances.
          */
-        pp::Instance* CreateInstance(PP_Instance instance) {
+        virtual pp::Instance* CreateInstance(PP_Instance instance) {
             return new Instance(instance);
         }
 };

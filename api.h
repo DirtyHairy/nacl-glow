@@ -32,6 +32,10 @@ namespace glow {
 
 class Instance;
 
+/**
+ * The Api class encapsulates the handles incoming and dispatches outgoing
+ * messages
+ */
 class Api {
     public:
 
@@ -45,6 +49,13 @@ class Api {
     private:
 
         Instance& instance;
+
+        /**
+         * pp::CompletionCallbackFactory allows to create
+         * pp::CompletionCallback instances from instance methods. The
+         * callbacks maintain a reference to the instance and can bind up to
+         * three arbitrary arguments (copy semantics).
+         */
         pp::CompletionCallbackFactory<Api>* callback_factory;
 
         void DoPostMessage(uint32_t result, const pp::Var& message);

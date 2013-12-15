@@ -29,6 +29,11 @@
 
 namespace glow {
 
+/**
+ * The Surface class implements a 8-bit grayscale framebuffer and the provides
+ * surface transformation and a couple of drawing operations. There is nothing
+ * NaCl specific here, so documentation is more sparse. Sorry :)
+ */
 class Surface {
     public:
 

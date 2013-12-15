@@ -32,6 +32,10 @@
 
 namespace glow {
 
+/**
+ * The Logger class wraps provides logging without directly calling the
+ * instance methods.
+ */
 class Logger {
     public:
 
@@ -43,6 +47,8 @@ class Logger {
     private:
 
         pp::Instance& instance;
+
+        // pp::Lock is a simple wrapper around a POSIX mutex.
         pp::Lock lock;
 
         Logger(const Logger&);

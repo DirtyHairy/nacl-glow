@@ -36,6 +36,11 @@ namespace {
 
 class EInvalidMessage {};
 
+/**
+ * The following helpers try to unwrap a value from the message. JS values are
+ * represented by pp::Var instances, which we have to typecheck before
+ * unwrapping.
+ */
 std::string MessageGetString(
     const pp::VarDictionary& msg,
     const std::string& name)
@@ -72,6 +77,10 @@ int32_t MessageGetInt(
     return value.AsInt();
 }
 
+/**
+ * Build an error message. The original message is returned in the
+ * originalMessage field.
+ */
 pp::VarDictionary BuildErrorMessage(
     const std::string& description,
     const pp::Var* originalMessage = NULL)
@@ -87,10 +96,18 @@ pp::VarDictionary BuildErrorMessage(
     return message;
 }
 
+/**
+ * Build a settings message.
+ */
 pp::VarDictionary BuildSettingsMessage(const glow::Settings& settings) {
     pp::VarDictionary message;
 
     message.Set("subject", "settingsBroadcast");
+
+    // While we can rely on the compiler to automatically generated a call to
+    // the pp::Var constructor to convert our atomic value into a pp::Var, we
+    // better cast it explicitly to the desired type in order to avoid nasty
+    // surprises.
     message.Set("bleed",    static_cast<double>(settings.Bleed()));
     message.Set("decayLin", static_cast<int32_t>(settings.Decay_lin()));
     message.Set("decayExp", static_cast<double>(settings.Decay_exp()));
@@ -100,6 +117,9 @@ pp::VarDictionary BuildSettingsMessage(const glow::Settings& settings) {
     return message;
 }
 
+/**
+ * Apply a settings change request.
+ */
 void ApplyChangeSettingsMessage(
     const pp::VarDictionary& message,
     glow::Settings& settings)
@@ -132,6 +152,7 @@ namespace glow {
 Api::Api(Instance& instance) :
     instance(instance)
 {
+    // Initialize the callback factory
     callback_factory = new pp::CompletionCallbackFactory<Api>(this);
 }
 
@@ -139,16 +160,29 @@ Api::~Api() {
     delete callback_factory;
 }
 
+/**
+ * All API messages consists of a JS object with a 'subject' property. Depending
+ * on the subject and a payload build from the other fields.
+ *
+ * This method will and must be called from the main thread (as it calls
+ * PostMessage directly).
+ */
 void Api::HandleMessage(const pp::Var& message) {
     try {
         if (!message.is_dictionary()) throw EInvalidMessage();
+        // pp::VarDictionary is the data type which represents JS objects.
         pp::VarDictionary msg(message);
 
         std::string subject = MessageGetString(msg, "subject");
         if (subject == "requestSettings") {
+            // Post a message object containing all settings to the JS side.
+            // Using pp:Instance::postMessage directly implies that we must be
+            // called from the main thread.
             instance.PostMessage(BuildSettingsMessage(instance.GetSettings()));
 
         } else if (subject == "changeSettings") {
+            // Try to unwrap all modified settings from the message and apply
+            // them to the settings object.
             ApplyChangeSettingsMessage(msg, instance.GetSettings());
 
         } else {
@@ -156,10 +190,16 @@ void Api::HandleMessage(const pp::Var& message) {
         }
 
     } catch (EInvalidMessage& e) {
+        // Invalid messages are returned to the sender.
         instance.PostMessage(BuildErrorMessage("invalid message", &message));
     }
 }
 
+/**
+ * Broadcast the current FPS to the JS side. This will be called from the
+ * renderer thread and thus we cannot call PostMessage directly but have to
+ * schedule a callback on the main thread instead.
+ */
 void Api::BroadcastFps(float processing_fps, float rendering_fps) {
     pp::VarDictionary msg;
 
@@ -167,12 +207,17 @@ void Api::BroadcastFps(float processing_fps, float rendering_fps) {
     msg.Set("processingFps", static_cast<double>(processing_fps));
     msg.Set("renderingFps", static_cast<double>(rendering_fps));
 
+    // pp::Core::CallOnMainThread schedules a callback on the main thread's
+    // message loop.
     pp::Module::Get()->core()->CallOnMainThread(0,
         callback_factory->NewCallback(&Api::DoPostMessage, msg));
 }
 
+/*
+ * Call PostMessage on the main thread.
+ */
 void Api::DoPostMessage(uint32_t result, const pp::Var& message) {
-    instance.PostMessage(message);
+    if (result == PP_OK) instance.PostMessage(message);
 }
 
 }

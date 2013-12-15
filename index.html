@@ -32,6 +32,10 @@ THE SOFTWARE.
 <script>
 (function() {
     var loader, module, controls,
+        /**
+         * This object will house the input sliders --- we'll fetch them later
+         * by ID
+         */
         inputs = {
             bleed: 'bleed',
             radius: 'radius',
@@ -39,11 +43,18 @@ THE SOFTWARE.
             decayLin: 'decay_lin',
             fps: 'target_fps'
         },
+        /**
+         * Dito, this houses the FPS displays.
+         */
         fpsDisplays = {
             processingFps: 'fps_processing',
             renderingFps: 'fps_rendering'
         };
 
+    /**
+     * Prepare a value for sending it to the module by ensuring the correct
+     * type.
+     */
     function marshall(name, value) {
         switch (name) {
             case 'bleed':
@@ -61,6 +72,9 @@ THE SOFTWARE.
         }
     }
 
+    /**
+     * Handle an incoming message and delegate to an event handler.
+     */
     function onMessage(message) {
         var subject = message.data.subject;
 
@@ -75,6 +89,9 @@ THE SOFTWARE.
         }
     }
     
+    /**
+     * Update FPS display.
+     */
     function onFpsBroadcast(message) {
         for (name in fpsDisplays) {
             if (message[name]) {
@@ -84,6 +101,9 @@ THE SOFTWARE.
         }
     }
 
+    /**
+     * Update sliders with updates settings.
+     */
     function onSettingsBroadcast(message) {
         for (var name in inputs) (function(name) {
             var container = inputs[name],
@@ -95,9 +115,13 @@ THE SOFTWARE.
             }
         })(name);
 
+        // The sliders are initially hidden, so make sure that they are visible.
         controls.style.visibility = 'visible';
     }
 
+    /**
+     * Relay an input change to the module.
+     */
     function onInputChange(name, relay) {
         var container = inputs[name],
             input = getInput(container),
@@ -109,6 +133,9 @@ THE SOFTWARE.
         }
     }
 
+    /**
+     * Build a settings update message and post it to the module
+     */
     function relaySettings() {
         var message = {
             subject: 'changeSettings'
@@ -123,6 +150,10 @@ THE SOFTWARE.
         }
     }
 
+    /**
+     * Get the actual input sliders and data containers from their parent
+     * elements.
+     */
     function getInput(container) {
         return container.getElementsByTagName('input')[0];
     }
@@ -135,11 +166,15 @@ THE SOFTWARE.
         return container.getElementsByTagName('span')[0];
     }
 
+    /**
+     * Bootstrap.
+     */
     function onDocumentLoad() {
         loader = document.getElementById('loader');
         module = document.getElementById('glow_module');
         controls = document.getElementById('controls');
 
+        // Retrieve the input elements.
         for (var name in inputs) (function(name) {
             var container = inputs[name] = document.getElementById(inputs[name]),
                 input = getInput(container);
@@ -149,15 +184,24 @@ THE SOFTWARE.
             }, true);
         })(name);
 
+        // Retrieve FPS display elements.
         for (var name in fpsDisplays) {
             fpsDisplays[name] = document.getElementById(fpsDisplays[name]);
         }
 
+        // Export the module load handler.
         window.onModuleLoad = onModuleLoad;
+
+        // Handle the race between module and document load by calling the
+        // module load handler directly if the module has already loaded.
         if (window.moduleLoaded) onModuleLoad();
     }
 
 
+    /**
+     * Hide the loading message and request an initial settings update once the
+     * module has loaded.
+     */
     function onModuleLoad() {
         loader.style.display = 'none';
         module.addEventListener('message', onMessage, true);
@@ -166,6 +210,7 @@ THE SOFTWARE.
         });
     }
 
+    // Export the document load handler to the global scope.
     window.onDocumentLoad = onDocumentLoad;
 })();
 </script>
@@ -175,8 +220,16 @@ THE SOFTWARE.
 
 <div id="container">
         <script>
+        /**
+         * Attaching the module load listener to the containing div instead of
+         * the actual module _before_ the module is loaded avoinds any
+         * potential races.
+         */
         (function() {
             function listener() {
+                // Raise the flag and call the listener if the JS code has
+                // already initialized. If not, it will recognize the flag and
+                // dispatch the listener itself.
                 window.moduleLoaded = true;
                 if (window.onModuleLoad) window.onModuleLoad();
             }
@@ -184,7 +237,11 @@ THE SOFTWARE.
             document.getElementById('container').addEventListener('load', listener, true);
         })();
         </script>
+
+        <!-- The loader -->
         <div id="loader">NaCl module loading...</div>
+
+        <!-- The actual module -->
         <embed
             name="glow_module"
             id="glow_module" 
@@ -194,6 +251,8 @@ THE SOFTWARE.
             type="application/x-nacl"
         />
 </div>
+
+<!-- The controls. -->
 <div id="controls">
     <div id="fps_processing" class="fps-display">
         <div>Processing FPS:</div><span>N/A</span>

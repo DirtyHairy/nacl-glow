@@ -28,6 +28,10 @@
 
 namespace {
 
+/**
+ * The setters enforce parameter constraints where applicable, so we define
+ * a helper.
+ */
 template<typename T> T constrain(T value, T min, T max) {
     if (value < min) return min;
     if (value > max) return max;
