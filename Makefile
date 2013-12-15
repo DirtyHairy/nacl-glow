@@ -118,6 +118,6 @@ Makefile.depend: Makefile
 	$(CXX_64) $(CXXFLAGS) $(INCLUDE) -MM $(SOURCE) | sed -e 's/^\(.*\.o:\)/obj_64\/\1/' > $@
 	$(CXX_32) $(CXXFLAGS) $(INCLUDE) -MM $(SOURCE) | sed -e 's/^\(.*\.o:\)/obj_32\/\1/' >> $@
 	$(CXX_arm) $(CXXFLAGS) $(INCLUDE) -MM $(SOURCE) | sed -e 's/^\(.*\.o:\)/obj_arm\/\1/' >> $@
-	test -x $(CXX_pnacl) && $(CXX_pnacl) $(CXXFLAGS) $(INCLUDE) -MM $(SOURCE) | sed -e 's/^\(.*\.o:\)/obj_pnacl\/\1/' >> $@
+	-test -x $(CXX_pnacl) && $(CXX_pnacl) $(CXXFLAGS) $(INCLUDE) -MM $(SOURCE) | sed -e 's/^\(.*\.o:\)/obj_pnacl\/\1/' >> $@
 
 include Makefile.depend
