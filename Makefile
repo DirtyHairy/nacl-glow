@@ -48,15 +48,15 @@ CXX_arm = $(PREFIX_arm)-g++
 STRIP_arm = $(PREFIX_arm)-strip
 LDFLAGS_arm = -L$(NACL_SDK_ROOT)/lib/newlib_arm/$(LIB_FLAVOR) $(LIBS)
 
-PREFIX_pnacl = $(TOOLCHAIN_pnacl)/bin/pnacl
+PREFIX_pnacl = $(TOOLCHAIN_pnacl)/bin64/pnacl
 CXX_pnacl = $(PREFIX_pnacl)-clang++
 STRIP_pnacl = $(PREFIX_pnacl)-strip
 FINALIZE_pnacl = $(PREFIX_pnacl)-finalize
 LDFLAGS_pnacl = -L$(NACL_SDK_ROOT)/lib/pnacl/$(LIB_FLAVOR) $(LIBS)
 
-BIN_64 = glow_64.pexe
-BIN_32 = glow_32.pexe
-BIN_arm = glow_arm.pexe
+BIN_64 = glow_64.nexe
+BIN_32 = glow_32.nexe
+BIN_arm = glow_arm.nexe
 BIN_pnacl = glow_pnacl.pexe
 BIN = $(BIN_64) $(BIN_32) $(BIN_arm)
 
