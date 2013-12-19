@@ -16,12 +16,20 @@ the project; `make clean` and `make realclean` will clean out the generated
 files. The build generates x86-32, x86-64 and arm binaries.
 
 You'll have to place the html, the `.nmf` manifest file and the
-`.pexe` executables on a webserver in order to try out the program. You can find
+`.nexe` executables on a webserver in order to try out the program. You can find
 a built version [here](http://www.cspeckner.de/nacl/glow). The program builds
 fine with pepper version 30.
 
 **Native client currently only works in chrome. If the module fails to load,
 make sure that native client is enabled at chrome://flags**
+
+#### PNaCl support
+
+As of Pepper 31, the program works with PNaCl. Call `make pnacl` in order to build
+the PNaCl `.pexe` executable. The PNaCl version is available as pnacl.html (hosted
+[here](http://www.cspeckner.de/nacl/glow/pnacl.html)). Note that the PNaCl version
+might be less stable and will most likely crash on invalid messages from
+Javascript as PNaCl currently doesn't support exceptions.
 
 ## The controls
 
